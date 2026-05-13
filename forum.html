@@ -21,24 +21,28 @@
         .forum-container { max-width: 900px; margin: 30px auto; }
         
         /* การ์ดกระทู้ */
-        .post-card { border-radius: 15px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 20px; background: white; transition: 0.3s; position: relative; overflow: hidden; }
+        .post-card { border-radius: 15px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 25px; background: white; position: relative; overflow: hidden; transition: 0.3s; }
         .post-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         
         .author-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #eee; }
-        .comment-img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+        .comment-img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd; }
         .btn-stb { background-color: var(--stb-red); color: white; border-radius: 25px; font-weight: 600; border: none; padding: 10px 25px; }
         .hidden { display: none !important; }
         .user-pill { background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 50px; display: flex; align-items: center; gap: 10px; color: white; font-size: 0.85rem; }
         
-        /* ปุ่มลบสำหรับ Admin (ปรับให้ชัดเจนขึ้น) */
-        .admin-controls { position: absolute; top: 15px; right: 15px; z-index: 10; }
+        /* ปุ่มจัดการสำหรับ Admin และเจ้าของ */
+        .admin-controls { position: absolute; top: 15px; right: 15px; z-index: 10; display: flex; gap: 5px; }
         .btn-delete-post { background-color: rgba(179, 37, 43, 0.1); color: var(--stb-red); border: 1px solid var(--stb-red); border-radius: 8px; font-size: 12px; font-weight: 700; padding: 4px 12px; transition: 0.2s; }
         .btn-delete-post:hover { background-color: var(--stb-red); color: white; }
+        .btn-edit-post { background-color: rgba(13, 110, 253, 0.1); color: #0d6efd; border: 1px solid #0d6efd; border-radius: 8px; font-size: 12px; font-weight: 700; padding: 4px 12px; transition: 0.2s; }
+        .btn-edit-post:hover { background-color: #0d6efd; color: white; }
 
         /* ส่วนของคอมเมนต์ */
-        .comment-item { background: #f9f9f9; border-radius: 10px; padding: 10px; margin-bottom: 8px; border-left: 3px solid var(--stb-red); }
-        .comment-author { font-weight: 700; color: var(--stb-red); font-size: 13px; }
-        .comment-text { font-size: 14px; color: #444; }
+        .comment-item { background: #fdfdfd; border-radius: 10px; padding: 10px; margin-bottom: 8px; border-left: 3px solid #ddd; }
+        .comment-admin { border-left: 3px solid var(--stb-red) !important; background: #fff5f5 !important; }
+        .comment-author { font-weight: 700; color: #333; font-size: 13px; }
+        .admin-tag { color: var(--stb-red); font-size: 11px; margin-left: 5px; font-weight: 800; }
+        .comment-text { font-size: 14px; color: #444; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -106,6 +110,24 @@
     </div>
 </div>
 
+<!-- Modal: Edit Post -->
+<div class="modal fade" id="editPostModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="border-radius: 15px;">
+            <div class="modal-body p-4">
+                <h5 class="fw-bold text-primary mb-3"><i class="fas fa-edit me-2"></i>แก้ไขข้อความของคุณ</h5>
+                <input type="hidden" id="editPostId">
+                <input type="text" id="editPostTitle" class="form-control mb-3" placeholder="หัวข้อคำถาม">
+                <textarea id="editPostContent" class="form-control mb-3" rows="5" placeholder="รายละเอียด..."></textarea>
+                <div class="text-end">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" onclick="updatePost()">บันทึกการแก้ไข</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -125,14 +147,9 @@
         try {
             supabaseClient = window.supabase.createClient(CONFIG.SB_URL, CONFIG.SB_KEY);
             authModal = new bootstrap.Modal(document.getElementById('loginModal'));
-            
-            const passInputEl = document.getElementById('passInput');
-            passInputEl.addEventListener('keypress', function(event) {
-                if (event.key === 'Enter') { handleLogin(); }
-            });
-
+            document.getElementById('passInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
             checkSession();
-        } catch (e) { console.error("Init Error:", e); }
+        } catch (e) { console.error(e); }
     });
 
     function checkSession() {
@@ -151,7 +168,6 @@
         const pass = document.getElementById('passInput').value.trim();
         if(!pass) return;
 
-        // แก้ไขสิทธิ์ Admin: ทั้ง 1669 และ 32 ได้สิทธิ์ Role Admin
         if (pass === '1669') {
             currentInstructor = { seq: '1669', name: 'Admin', avatar: 'https://cdn-icons-png.flaticon.com/512/6024/6024190.png', role: 'admin' };
             finalizeLogin(); return;
@@ -167,23 +183,20 @@
         try {
             const res = await fetch(`${CONFIG.GAS}?action=getMembers&t=${Date.now()}`);
             const members = await res.json();
-            const instructor = members.find(m => String(m.sequence || m.ลำดับ) === pass);
+            const found = members.find(m => String(m.sequence || m.ลำดับ) === pass);
 
-            if (instructor) {
+            if (found) {
                 currentInstructor = {
                     seq: pass,
-                    name: instructor.fullName || instructor.ชื่อนามสกุล || instructor.fullname,
-                    avatar: instructor.imageUrl || instructor.imageurl || '',
+                    name: found.fullName || found.ชื่อนามสกุล || found.fullname,
+                    avatar: found.imageUrl || found.imageurl || '',
                     role: 'user'
                 };
                 if(currentInstructor.avatar.includes('id=')) {
                     currentInstructor.avatar = `https://drive.google.com/thumbnail?id=${currentInstructor.avatar.split('id=')[1].split('&')[0]}&sz=w200`;
                 }
                 finalizeLogin();
-            } else { 
-                Swal.fire('ผิดพลาด', 'รหัสผ่านไม่ถูกต้อง', 'error'); 
-                document.getElementById('passInput').value = '';
-            }
+            } else { Swal.fire('ผิดพลาด', 'รหัสผ่านไม่ถูกต้อง', 'error'); }
         } catch (e) { Swal.fire('Error', 'ระบบขัดข้อง', 'error'); }
     }
 
@@ -202,7 +215,6 @@
         document.getElementById('userNameDisplay').innerText = currentInstructor.name;
     }
 
-    // ฟังก์ชันดึงกระทู้พร้อมคอมเมนต์
     async function loadPosts() {
         const container = document.getElementById('postsList');
         const { data: posts, error } = await supabaseClient
@@ -217,36 +229,34 @@
             }
 
             container.innerHTML = posts.map(p => {
-                // สร้าง HTML สำหรับรายการคอมเมนต์
+                const isOwner = String(p.author_seq) === String(currentInstructor.seq);
+                const isAdmin = currentInstructor.role === 'admin';
+
                 const commentsHtml = p.comments ? p.comments.sort((a,b) => new Date(a.created_at) - new Date(b.created_at)).map(c => `
-                    <div class="comment-item d-flex gap-2 align-items-start">
-                        <img src="${c.author_avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="comment-img">
-                        <div>
-                            <div class="comment-author">${c.author_name}</div>
-                            <div class="comment-text">${c.message}</div>
+                    <div class="comment-item ${c.author_seq === '1669' ? 'comment-admin' : ''}">
+                        <div class="d-flex gap-2 align-items-center">
+                            <img src="${c.author_avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="comment-img">
+                            <div class="comment-author">
+                                ${c.author_name} 
+                                ${c.author_seq === '1669' ? '<span class="admin-tag">[Admin]</span>' : ''}
+                            </div>
                         </div>
+                        <div class="comment-text ms-4">${c.message}</div>
                     </div>
                 `).join('') : '';
 
                 return `
                     <div class="card post-card p-4">
-                        <!-- ปุ่มลบสำหรับ Admin ที่ชัดเจนขึ้น -->
-                        ${currentInstructor.role === 'admin' ? `
-                            <div class="admin-controls">
-                                <button class="btn-delete-post" onclick="deletePost('${p.id}')">
-                                    <i class="fas fa-trash-alt me-1"></i> ลบกระทู้
-                                </button>
-                            </div>
-                        ` : ''}
+                        <div class="admin-controls">
+                            ${isOwner ? `<button class="btn-edit-post" onclick="openEditModal('${p.id}', '${p.title}', \`${p.content}\`)"><i class="fas fa-pen"></i> แก้ไข</button>` : ''}
+                            ${(isAdmin || isOwner) ? `<button class="btn-delete-post" onclick="deletePost('${p.id}')"><i class="fas fa-trash-alt"></i> ลบทิ้ง</button>` : ''}
+                        </div>
                         
                         <div class="d-flex align-items-center gap-3 mb-3">
                             <img src="${p.author_avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="author-img">
                             <div class="w-100">
-                                <div class="d-flex justify-content-between">
-                                    <div class="fw-bold text-danger">
-                                        ${p.author_name} 
-                                        ${p.author_seq === '1669' ? '<i class="fas fa-check-circle small ms-1"></i>' : ''}
-                                    </div>
+                                <div class="d-flex justify-content-between pe-5">
+                                    <div class="fw-bold text-danger">${p.author_name} ${p.author_seq === '1669' ? '<i class="fas fa-check-circle small ms-1"></i>' : ''}</div>
                                     <span class="badge bg-danger rounded-pill">${p.category || 'พูดคุย'}</span>
                                 </div>
                                 <div class="text-muted small">${new Date(p.created_at).toLocaleString('th-TH')}</div>
@@ -254,79 +264,78 @@
                         </div>
                         <h5 class="fw-bold mb-2">${p.title}</h5>
                         <p class="text-muted mb-4" style="white-space: pre-wrap;">${p.content}</p>
-                        
                         <hr class="my-3 opacity-25">
-                        
-                        <!-- ส่วนแสดงคอมเมนต์ -->
-                        <div id="comment-container-${p.id}">
-                            ${commentsHtml}
-                        </div>
-
-                        <!-- ช่องพิมพ์ตอบกลับ -->
+                        <div id="comments-${p.id}">${commentsHtml}</div>
                         <div class="input-group input-group-sm mt-3">
-                            <input type="text" id="reply-input-${p.id}" class="form-control border-danger" placeholder="เขียนข้อความตอบกลับที่นี่...">
-                            <button class="btn btn-danger px-3" onclick="submitComment('${p.id}')">ส่ง</button>
+                            <input type="text" id="reply-${p.id}" class="form-control border-danger" placeholder="พิมพ์ข้อความตอบกลับ...">
+                            <button class="btn btn-danger" onclick="submitComment('${p.id}')">ส่ง</button>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }).join('');
         }
     }
 
-    // ฟังก์ชันส่งคอมเมนต์
     async function submitComment(postId) {
-        const input = document.getElementById(`reply-input-${postId}`);
-        const message = input.value.trim();
-        if(!message) return;
+        const input = document.getElementById(`reply-${postId}`);
+        const msg = input.value.trim();
+        if(!msg) return;
 
         const { error } = await supabaseClient.from('comments').insert([{
             post_id: postId,
-            message: message,
+            message: msg,
             author_name: currentInstructor.name,
             author_seq: currentInstructor.seq,
             author_avatar: currentInstructor.avatar
         }]);
 
-        if(!error) {
-            input.value = '';
-            loadPosts(); 
-        } else {
-            Swal.fire('Error', 'ไม่สามารถตอบกลับได้: ' + error.message, 'error');
-        }
+        if(!error) { input.value = ''; loadPosts(); }
+        else { Swal.fire('Error', error.message, 'error'); }
     }
 
     async function deletePost(postId) {
-        const confirm = await Swal.fire({
-            title: 'ยืนยันการลบ?',
-            text: "กระทู้และคำตอบทั้งหมดจะหายไปถาวร",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#b3252b',
-            confirmButtonText: 'ลบทันที',
-            cancelButtonText: 'ยกเลิก'
-        });
+        const confirm = await Swal.fire({ title: 'ลบกระทู้?', text: "ข้อมูลจะหายไปถาวร", icon: 'warning', showCancelButton: true, confirmButtonColor: '#b3252b' });
         if (confirm.isConfirmed) {
+            Swal.fire({ title: 'กำลังลบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             const { error } = await supabaseClient.from('posts').delete().match({ id: postId });
             if (!error) { 
                 Swal.fire({ icon: 'success', title: 'ลบเรียบร้อย', showConfirmButton: false, timer: 1000 });
                 loadPosts(); 
-            }
+            } else { Swal.fire('Error', error.message, 'error'); }
         }
+    }
+
+    function openEditModal(id, title, content) {
+        document.getElementById('editPostId').value = id;
+        document.getElementById('editPostTitle').value = title;
+        document.getElementById('editPostContent').value = content;
+        new bootstrap.Modal(document.getElementById('editPostModal')).show();
+    }
+
+    async function updatePost() {
+        const id = document.getElementById('editPostId').value;
+        const title = document.getElementById('editPostTitle').value.trim();
+        const content = document.getElementById('editPostContent').value.trim();
+        if(!title || !content) return;
+
+        Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        const { error } = await supabaseClient.from('posts').update({ title, content }).match({ id: id });
+
+        if(!error) {
+            bootstrap.Modal.getInstance(document.getElementById('editPostModal')).hide();
+            Swal.fire({ icon: 'success', title: 'แก้ไขสำเร็จ', showConfirmButton: false, timer: 1000 });
+            loadPosts();
+        } else { Swal.fire('Error', error.message, 'error'); }
     }
 
     async function submitPost() {
         const title = document.getElementById('postTitle').value.trim();
         const content = document.getElementById('postContent').value.trim();
         const category = document.getElementById('postCategory').value;
-        if(!title || !content) return Swal.fire('แจ้งเตือน', 'กรุณากรอกข้อมูลให้ครบ', 'warning');
+        if(!title || !content) return;
 
         const { error } = await supabaseClient.from('posts').insert([{
-            title: title, 
-            content: content, 
-            category: category,
-            author_name: currentInstructor.name, 
-            author_seq: currentInstructor.seq, 
-            author_avatar: currentInstructor.avatar
+            title, content, category,
+            author_name: currentInstructor.name, author_seq: currentInstructor.seq, author_avatar: currentInstructor.avatar
         }]);
 
         if(!error) {
@@ -334,8 +343,6 @@
             loadPosts();
             document.getElementById('postTitle').value = '';
             document.getElementById('postContent').value = '';
-        } else {
-            Swal.fire('Error', error.message, 'error');
         }
     }
 

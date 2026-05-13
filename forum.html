@@ -24,7 +24,7 @@
         .post-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         
         .author-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #eee; }
-        .btn-stb { background-color: var(--stb-red); color: white; border-radius: 25px; font-weight: 600; border: none; padding: 10px 25px; }
+        .btn-stb { background-color: var(--stb-red); color: white; border-radius: 25px; font-weight: 600; border: none; padding: 10px 25px; transition: 0.2s; }
         .btn-stb:hover { background-color: #8a1d21; color: white; }
 
         .hidden { display: none !important; }
@@ -38,12 +38,15 @@
         <a class="navbar-brand m-0" href="index.html">
             <i class="fas fa-comments me-2" style="color: var(--stb-red);"></i>เว็บบอร์ดผู้สอน
         </a>
-        <div id="userInfo" class="hidden">
-            <div class="user-pill">
+        <div id="userInfo" class="hidden d-flex align-items-center">
+            <div class="user-pill me-2">
                 <img id="userAvatar" src="" style="width: 25px; height: 25px; border-radius: 50%; object-fit: cover;">
-                <span id="userNameDisplay"></span>
-                <button class="btn btn-link btn-sm text-white p-0" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
+                <span id="userNameDisplay" class="fw-bold d-none d-sm-inline"></span>
             </div>
+            <a href="index.html" class="btn btn-outline-light btn-sm fw-bold px-3 rounded-pill me-2">
+                <i class="fas fa-home me-1"></i>หน้าหลัก
+            </a>
+            <button class="btn btn-danger btn-sm rounded-pill" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
         </div>
     </div>
 </nav>
@@ -57,7 +60,11 @@
     </div>
     
     <div id="postsList">
-        <div class="text-center py-5"><div class="spinner-border text-danger"></div></div>
+        <!-- Spinner โหลดข้อมูล -->
+        <div class="text-center py-5">
+            <div class="spinner-border text-danger" style="width: 3rem; height: 3rem;"></div>
+            <div class="mt-2 text-muted fw-bold">กำลังโหลดข้อมูล...</div>
+        </div>
     </div>
 </div>
 
@@ -81,16 +88,31 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content" style="border-radius: 15px;">
             <div class="modal-header border-0 p-4 pb-0">
-                <h5 class="modal-title fw-bold">ระบุคำถามของคุณ</h5>
+                <h5 class="modal-title fw-bold text-danger"><i class="fas fa-edit me-2"></i>ระบุคำถามของคุณ</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
-                <input type="text" id="postTitle" class="form-control mb-3" placeholder="หัวข้อคำถาม (สั้นๆ ได้ใจความ)">
-                <textarea id="postContent" class="form-control" rows="5" placeholder="อธิบายรายละเอียดที่ต้องการสอบถาม..."></textarea>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">หมวดหมู่</label>
+                    <select id="postCategory" class="form-select">
+                        <option value="พูดคุยทั่วไป">พูดคุยทั่วไป</option>
+                        <option value="เทคนิคการสอน">เทคนิคการสอน</option>
+                        <option value="อุปกรณ์การแพทย์">อุปกรณ์การแพทย์</option>
+                        <option value="คำถามจากนักเรียน">คำถามจากนักเรียน</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">หัวข้อคำถาม</label>
+                    <input type="text" id="postTitle" class="form-control" placeholder="ระบุหัวข้อคำถามสั้นๆ ได้ใจความ">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">รายละเอียด</label>
+                    <textarea id="postContent" class="form-control" rows="5" placeholder="อธิบายรายละเอียดที่ต้องการสอบถาม..."></textarea>
+                </div>
             </div>
             <div class="modal-footer border-0 p-4 pt-0">
                 <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">ยกเลิก</button>
-                <button type="button" class="btn-stb" onclick="submitPost()">ส่งคำถาม</button>
+                <button type="button" class="btn-stb" onclick="submitPost()">โพสต์กระทู้</button>
             </div>
         </div>
     </div>
@@ -101,104 +123,184 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
+    // 1. ตั้งค่าการเชื่อมต่อ (Configuration)
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbxnr0zqjwDx3nmLii061zOnU_Bhvva8UxQ-Qf1beH0EA8eRAOFigiuxrpn_Qihci8DE/exec';
     const SUPABASE_URL = 'https://cvtpzuqmensoigxzmwrk.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2dHB6dXFtZW5zb2lneHptd3JrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MzM5NDEsImV4cCI6MjA5NDIwOTk0MX0.yrpFk48HUihXuhZzLZ6_3yEtZhduU8yRZgQ-VrYUwQY';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+    
+    // ประกาศตัวแปรไว้ใช้งาน
+    let supabase;
     let currentUser = null;
     let loginModal;
 
+    // 2. เริ่มต้นระบบ
     document.addEventListener('DOMContentLoaded', () => {
-        loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
-        checkAuth();
+        try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            
+            const modalElement = document.getElementById('loginModal');
+            if (modalElement) {
+                loginModal = new bootstrap.Modal(modalElement);
+                checkAuth();
+            }
+        } catch (err) {
+            console.error("System Init Error:", err);
+            Swal.fire('Error', 'ไม่สามารถเริ่มต้นระบบเว็บบอร์ดได้', 'error');
+        }
     });
 
+    // 3. ตรวจสอบการ Login
     function checkAuth() {
         const saved = localStorage.getItem('stb_instructor');
         if (saved) {
-            currentUser = JSON.parse(saved);
-            renderUI();
-            loadPosts();
+            try {
+                currentUser = JSON.parse(saved);
+                renderUI();
+                loadPosts();
+            } catch (e) {
+                localStorage.removeItem('stb_instructor');
+                loginModal.show();
+            }
         } else {
             loginModal.show();
         }
     }
 
+    // 4. เข้าสู่ระบบ
     async function handleLogin() {
         const pass = document.getElementById('passInput').value.trim();
         if(!pass) return;
 
-        Swal.fire({ title: 'กำลังยืนยันตัวตน...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+        Swal.fire({ title: 'กำลังตรวจสอบ...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
 
         try {
             const res = await fetch(`${GAS_URL}?action=getMembers&t=${Date.now()}`);
             const members = await res.json();
-            // ตรวจสอบรหัสผ่านกับ Sequence ในระบบ
+            
+            // เช็ครหัสผ่านกับ sequence
             const found = members.find(m => String(m.sequence || m.ลำดับ) === pass);
 
             if (found) {
+                // เก็บข้อมูลเพื่อใช้โพสต์
                 currentUser = {
                     seq: pass,
-                    name: found.fullName || found.ชื่อนามสกุล,
-                    avatar: found.imageUrl || found.imageurl || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'
+                    name: found.fullname || found.fullName || found.ชื่อนามสกุล || 'ไม่ระบุชื่อ',
+                    avatar: found.imageurl || found.imageUrl || found.รูปภาพ || ''
                 };
+                
+                // แปลงลิงก์รูปให้เป็น Thumbnail
+                if(currentUser.avatar.includes('id=')) {
+                    currentUser.avatar = `https://drive.google.com/thumbnail?id=${currentUser.avatar.split('id=')[1].split('&')[0]}&sz=w200`;
+                }
+
                 localStorage.setItem('stb_instructor', JSON.stringify(currentUser));
                 Swal.close();
                 loginModal.hide();
                 renderUI();
                 loadPosts();
             } else {
-                Swal.fire('ผิดพลาด', 'รหัสผ่านไม่ถูกต้อง หรือคุณยังไม่ได้ลงทะเบียนผู้สอน', 'error');
+                Swal.fire('ผิดพลาด', 'รหัสผ่านไม่ถูกต้อง หรือยังไม่ได้ลงทะเบียน', 'error');
             }
-        } catch (e) { Swal.fire('Error', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error'); }
+        } catch (e) {
+            console.error(e);
+            Swal.fire('Error', 'การเชื่อมต่อระบบขัดข้อง', 'error');
+        }
     }
 
+    // 5. อัปเดตหน้าจอ
     function renderUI() {
         document.getElementById('userInfo').classList.remove('hidden');
         document.getElementById('forumContent').classList.remove('hidden');
-        document.getElementById('userAvatar').src = currentUser.avatar;
+        
+        const avatar = currentUser.avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+        document.getElementById('userAvatar').src = avatar;
         document.getElementById('userNameDisplay').innerText = currentUser.name;
     }
 
+    // 6. ดึงข้อมูลกระทู้มาแสดง
     async function loadPosts() {
-        const { data, error } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
-        const container = document.getElementById('postsList');
-        
-        if (data) {
+        try {
+            const { data, error } = await supabase
+                .from('posts')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            const container = document.getElementById('postsList');
+            
+            if (error) throw error;
+
+            if (data.length === 0) {
+                container.innerHTML = '<div class="text-center py-5 text-muted"><i class="fas fa-folder-open fa-3x mb-3 text-secondary"></i><br>ยังไม่มีกระทู้ เริ่มตั้งคำถามแรกได้เลย!</div>';
+                return;
+            }
+
             container.innerHTML = data.map(p => `
                 <div class="card post-card p-4">
                     <div class="d-flex align-items-center gap-3 mb-3">
-                        <img src="${p.author_avatar}" class="author-img">
-                        <div>
-                            <div class="fw-bold text-danger">${p.author_name}</div>
-                            <div class="text-muted small">${new Date(p.created_at).toLocaleString('th-TH')}</div>
+                        <img src="${p.author_avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="author-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
+                        <div class="w-100">
+                            <div class="d-flex justify-content-between">
+                                <div class="fw-bold text-danger">${p.author_name}</div>
+                                <span class="badge bg-danger rounded-pill">${p.category || 'พูดคุยทั่วไป'}</span>
+                            </div>
+                            <div class="text-muted small"><i class="far fa-clock me-1"></i>${new Date(p.created_at).toLocaleString('th-TH')}</div>
                         </div>
                     </div>
                     <h5 class="fw-bold mb-2">${p.title}</h5>
-                    <p class="text-muted mb-0">${p.content}</p>
+                    <p class="text-muted mb-0" style="white-space: pre-wrap;">${p.content}</p>
                 </div>
             `).join('');
+            
+        } catch (err) {
+            console.error("Load Posts Error:", err);
+            document.getElementById('postsList').innerHTML = '<div class="text-center text-danger">ไม่สามารถโหลดข้อมูลได้</div>';
         }
     }
 
+    // 7. ตั้งกระทู้ใหม่
     async function submitPost() {
         const title = document.getElementById('postTitle').value.trim();
         const content = document.getElementById('postContent').value.trim();
-        if(!title || !content) return;
+        const category = document.getElementById('postCategory').value;
+        
+        if(!title || !content) {
+            return Swal.fire('แจ้งเตือน', 'กรุณากรอกหัวข้อและรายละเอียด', 'warning');
+        }
+
+        // ปุ่มแสดงสถานะกำลังบันทึก
+        const btn = document.querySelector('.modal-footer .btn-stb');
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> กำลังส่ง...';
+        btn.disabled = true;
 
         const { error } = await supabase.from('posts').insert([{
-            title, content, author_name: currentUser.name, author_seq: currentUser.seq, author_avatar: currentUser.avatar
+            title: title, 
+            content: content,
+            category: category,
+            author_name: currentUser.name, 
+            author_seq: currentUser.seq, 
+            author_avatar: currentUser.avatar
         }]);
+
+        btn.innerHTML = 'โพสต์กระทู้';
+        btn.disabled = false;
 
         if(!error) {
             bootstrap.Modal.getInstance(document.getElementById('addPostModal')).hide();
-            loadPosts();
+            Swal.fire({ icon: 'success', title: 'ตั้งกระทู้สำเร็จ', showConfirmButton: false, timer: 1500 });
+            
             document.getElementById('postTitle').value = '';
             document.getElementById('postContent').value = '';
+            
+            // ให้หน้าจอแสดงว่ากำลังโหลดข้อมูลใหม่
+            document.getElementById('postsList').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-danger"></div></div>';
+            loadPosts();
+        } else {
+            Swal.fire('Error', 'ไม่สามารถตั้งกระทู้ได้', 'error');
+            console.error("Insert Error:", error);
         }
     }
 
+    // 8. ออกจากระบบ
     function logout() {
         localStorage.removeItem('stb_instructor');
         location.reload();

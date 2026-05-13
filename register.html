@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ลงทะเบียนผู้สอน - STOP THE BLEED INSTRUCTOR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --stb-red: #b3252b;
+            --stb-black: #000000;
+            --stb-white: #ffffff;
+        }
+
+        body { font-family: 'Sarabun', sans-serif; background-color: #f8f9fa; }
+        
+        /* Navbar สีดำ ขอบแดง */
+        .navbar { 
+            background-color: var(--stb-black) !important; 
+            border-bottom: 4px solid var(--stb-red);
+            height: 55px; 
+        }
+
+        .reg-card { 
+            border-radius: 20px; 
+            border: none; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
+            background: #fff; 
+            overflow: hidden;
+        }
+
+        .card-header-stb {
+            background-color: var(--stb-white);
+            border-bottom: 2px solid #eee;
+            padding: 25px;
+        }
+
+        .preview-container { 
+            width: 160px; 
+            height: 200px; 
+            margin: 0 auto; 
+            background: #f0f0f0; 
+            border-radius: 12px; 
+            border: 3px solid #ddd; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+            overflow: hidden; 
+            position: relative; 
+        }
+        .preview-container img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Validation States */
+        .is-invalid { border-color: var(--stb-red) !important; border-width: 2px !important; }
+        .is-valid { border-color: #198754 !important; border-width: 2px !important; }
+        .feedback-text { font-size: 0.85rem; font-weight: 600; margin-top: 5px; display: block; }
+
+        /* Loading Overlay */
+        #loading { 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: rgba(255,255,255,0.95); 
+            z-index: 9999; 
+            display: none; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+        }
+
+        .btn-stb {
+            background-color: var(--stb-red);
+            color: white;
+            border: none;
+            padding: 12px;
+            transition: all 0.3s;
+        }
+        .btn-stb:hover {
+            background-color: #8a1d21;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(179, 37, 43, 0.3);
+        }
+        .btn-outline-stb {
+            color: var(--stb-red);
+            border: 2px solid var(--stb-red);
+        }
+        .btn-outline-stb:hover {
+            background-color: var(--stb-red);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div id="loading">
+    <div class="spinner-border" style="width: 3.5rem; height: 3.5rem; color: var(--stb-red);"></div>
+    <div class="fw-bold mt-3 fs-5" style="color: var(--stb-red);" id="loadText">กำลังดำเนินการ...</div>
+</div>
+
+<nav class="navbar navbar-dark shadow-sm mb-5">
+    <div class="container d-flex justify-content-between align-items-center">
+        <span class="navbar-brand mb-0 h1" style="font-size: 15px;">
+            <i class="fas fa-tint me-2" style="color: var(--stb-red);"></i>ระบบลงทะเบียนผู้สอน
+        </span>
+        <a href="index.html" class="btn btn-outline-light btn-sm fw-bold px-3 rounded-pill">
+            <i class="fas fa-home me-1"></i>กลับหน้าหลัก
+        </a>
+    </div>
+</nav>
+
+<div class="container pb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card reg-card">
+                <div class="card-header-stb text-center">
+                    <img src="https://cppqbctiybszcneqawjw.supabase.co/storage/v1/object/public/PIC/STB-Ins.png" alt="Logo" style="height: 80px; margin-bottom: 15px;">
+                    <h3 class="fw-bold" style="color: var(--stb-red);">ลงทะเบียนผู้สอนใหม่</h3>
+                    <p class="text-muted small mb-0">STOP THE BLEED INSTRUCTOR BY OXYFIGHT CENTER</p>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    <form id="regForm">
+                        <div class="row g-4 text-start">
+                            <!-- ลำดับที่ -->
+                            <div class="col-md-6 mx-auto text-center mb-2">
+                                <label class="form-label fw-bold" style="color: var(--stb-red);">เลขลำดับประจำตัว</label>
+                                <input type="number" id="inpSeq" class="form-control form-control-lg text-center fw-bold border-2" style="border-color: #eee;" placeholder="ระบุเลขลำดับ" required>
+                                <span id="seqFeedback" class="feedback-text"></span>
+                            </div>
+
+                            <div class="col-12"><hr></div>
+
+                            <!-- รูปถ่าย -->
+                            <div class="col-12 text-center mb-3">
+                                <label class="form-label fw-bold d-block mb-3 text-start"><i class="fas fa-image me-2"></i>รูปถ่ายโปรไฟล์ (สัดส่วน 3:4)</label>
+                                <div class="preview-container mb-3">
+                                    <img id="imgPreview" src="https://via.placeholder.com/300x400?text=Instructor+Photo">
+                                </div>
+                                <label class="btn btn-sm btn-outline-stb fw-bold shadow-sm">
+                                    <i class="fas fa-camera me-1"></i> เลือกรูปถ่ายหน้าตรง
+                                    <input type="file" id="inpFile" hidden accept="image/*" required>
+                                </label>
+                                <p class="text-muted mt-2" style="font-size: 0.75rem;">* ระบบจะปรับขนาดรูปให้อัตโนมัติ</p>
+                            </div>
+
+                            <!-- ข้อมูลส่วนตัว -->
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">ชื่อ - นามสกุล (พร้อมคำนำหน้า)</label>
+                                <input type="text" id="inpName" class="form-control" placeholder="เช่น นายสมชาย ใจดี" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">ชื่อเล่น</label>
+                                <input type="text" id="inpNick" class="form-control" placeholder="ระบุชื่อเล่น" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">เบอร์โทรศัพท์</label>
+                                <input type="tel" id="inpPhone" class="form-control" placeholder="0XXXXXXXXX" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold">สังกัด / หน่วยงาน</label>
+                                <input type="text" id="inpAddr" class="form-control" placeholder="ระบุโรงพยาบาล หรือ หน่วยงานที่สังกัด">
+                            </div>
+                        </div>
+
+                        <div class="mt-5">
+                            <button type="submit" id="btnSubmit" class="btn btn-stb btn-lg w-100 fw-bold rounded-3">
+                                <i class="fas fa-save me-2"></i>บันทึกข้อมูลและลงทะเบียน
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbwoThfq-QRt5Ypc9An45RupB5hJR1civOgKQQxx2WpxQKcfM3SEGPoJ8LgUC8ixyLg/exec';
+    let membersRAM = [];
+    let isDataLoaded = false;
+
+    window.onload = async () => {
+        showLoading(true, "กำลังเชื่อมต่อฐานข้อมูล...");
+        try {
+            const res = await fetch(`${scriptUrl}?action=getMembers&t=${Date.now()}`);
+            const data = await res.json();
+            membersRAM = data.map(m => String(m.sequence || m.ลำดับ));
+            isDataLoaded = true;
+        } catch (e) { console.error("Load members error"); }
+        showLoading(false);
+    };
+
+    const inpSeq = document.getElementById('inpSeq');
+    const feedback = document.getElementById('seqFeedback');
+    const btnSubmit = document.getElementById('btnSubmit');
+
+    inpSeq.addEventListener('input', function() {
+        const val = this.value.trim();
+        if (!val) { resetState(); return; }
+        if (!isDataLoaded) return;
+
+        if (membersRAM.includes(String(val))) {
+            this.classList.add('is-invalid');
+            this.classList.remove('is-valid');
+            feedback.innerHTML = `<span class="text-danger"><i class="fas fa-times-circle me-1"></i>ลำดับที่ ${val} นี้ลงทะเบียนแล้ว</span>`;
+            btnSubmit.disabled = true;
+        } else {
+            this.classList.add('is-valid');
+            this.classList.remove('is-invalid');
+            feedback.innerHTML = `<span class="text-success"><i class="fas fa-check-circle me-1"></i>ลำดับที่ ${val} สามารถลงทะเบียนได้</span>`;
+            btnSubmit.disabled = false;
+        }
+    });
+
+    function resetState() {
+        inpSeq.classList.remove('is-invalid', 'is-valid');
+        feedback.innerHTML = "";
+        btnSubmit.disabled = false;
+    }
+
+    document.getElementById('inpFile').onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            document.getElementById('imgPreview').src = URL.createObjectURL(file);
+        }
+    };
+
+    async function resizeImage(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = 600; 
+                    let scaleFactor = width / img.width;
+                    canvas.width = width;
+                    canvas.height = img.height * scaleFactor;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.8)); 
+                }
+                img.src = event.target.result;
+            }
+            reader.readAsDataURL(file);
+        });
+    }
+
+    document.getElementById('regForm').onsubmit = async (e) => {
+        e.preventDefault();
+        
+        const confirm = await Swal.fire({ 
+            title: 'ยืนยันข้อมูล?', 
+            text: "ตรวจสอบข้อมูลให้ถูกต้องก่อนบันทึก",
+            icon: 'warning', 
+            showCancelButton: true,
+            confirmButtonColor: '#b3252b',
+            confirmButtonText: 'ตกลง, บันทึกข้อมูล',
+            cancelButtonText: 'แก้ไขข้อมูล'
+        });
+        if (!confirm.isConfirmed) return;
+
+        showLoading(true, "กำลังอัปโหลดข้อมูล...");
+        
+        const fileInput = document.getElementById('inpFile');
+        let base64Image = "";
+        if (fileInput.files[0]) {
+            base64Image = await resizeImage(fileInput.files[0]);
+        }
+
+        const payload = {
+            action: 'register',
+            sequence: inpSeq.value,
+            fullName: document.getElementById('inpName').value,
+            nickname: document.getElementById('inpNick').value,
+            phone: document.getElementById('inpPhone').value,
+            address: document.getElementById('inpAddr').value, // ในที่นี้ใช้เป็นหน่วยงาน/สังกัด
+            image: base64Image,
+            imageName: `Instructor_${inpSeq.value}_${Date.now()}.jpg`
+        };
+
+        try {
+            await fetch(scriptUrl, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                body: JSON.stringify(payload) 
+            });
+            
+            setTimeout(() => {
+                showLoading(false);
+                Swal.fire({
+                    title: 'บันทึกสำเร็จ!',
+                    text: 'ข้อมูลของคุณถูกส่งเข้าระบบเรียบร้อยแล้ว',
+                    icon: 'success',
+                    confirmButtonColor: '#b3252b',
+                    confirmButtonText: 'กลับหน้าหลัก'
+                }).then(() => {
+                    window.location.href = 'index.html';
+                });
+            }, 2500); 
+
+        } catch (err) { 
+            showLoading(false);
+            Swal.fire('Error', 'เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error');
+        }
+    };
+
+    function showLoading(show, text = "") {
+        const loader = document.getElementById('loading');
+        const loaderText = document.getElementById('loadText');
+        if (show) {
+            loaderText.innerText = text;
+            loader.style.display = 'flex';
+        } else {
+            loader.style.display = 'none';
+        }
+    }
+</script>
+</body>
+</html>

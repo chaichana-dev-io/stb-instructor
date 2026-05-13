@@ -61,7 +61,7 @@
         .menu-card {
             background: linear-gradient(135deg, #b3252b, #8a1d21);
             border-radius: 12px; 
-            height: 95px; 
+            height: 85px; 
             display: flex; 
             align-items: center;
             padding: 0 25px; 
@@ -71,14 +71,25 @@
             border: none; 
             margin-bottom: 15px;
             box-shadow: 0 6px 15px rgba(179, 37, 43, 0.2);
+            cursor: pointer;
         }
         .menu-card:hover { 
             transform: translateX(10px); 
             box-shadow: 0 10px 25px rgba(179, 37, 43, 0.35); 
             filter: brightness(1.1);
         }
-        .menu-card i { font-size: 28px; margin-right: 20px; width: 40px; text-align: center; }
-        .menu-card h4 { font-weight: 600; font-size: 18px; margin: 0; }
+        .menu-card i { font-size: 24px; margin-right: 20px; width: 40px; text-align: center; }
+        .menu-card h4 { font-weight: 600; font-size: 16px; margin: 0; }
+
+        /* ปรับสีให้การ์ด Q&A เด่นขึ้นนิดนึง (สีดำ-แดง) */
+        .menu-forum {
+            background: linear-gradient(135deg, #222, #000);
+            border-left: 5px solid var(--stb-red);
+        }
+        .menu-forum:hover {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        .menu-forum i { color: var(--stb-red); }
 
         .display-area {
             background: white; 
@@ -86,13 +97,13 @@
             padding: 30px;
             border-left: 8px solid var(--stb-red);
             box-shadow: 0 12px 40px rgba(0,0,0,0.07);
-            overflow: hidden; /* ป้องกันเนื้อหาล้นกล่อง */
+            overflow: hidden;
+            height: 100%;
         }
 
-        /* ปรับรูปภาพให้พอดีพื้นที่ประกาศ */
         .news-img {
-            max-width: 100%; /* ไม่ให้กว้างเกินกล่อง */
-            height: auto; /* รักษาสัดส่วนภาพ */
+            max-width: 100%; 
+            height: auto; 
             border-radius: 12px;
             margin-bottom: 20px;
             display: block;
@@ -140,6 +151,7 @@
 
     <div class="container py-2 mb-5">
         <div class="row g-4">
+            <!-- ส่วนของปุ่มเมนู (ฝั่งซ้าย) -->
             <div class="col-lg-4 col-md-5">
                 <div class="menu-card" onclick="window.location.href='register.html'">
                     <i class="fas fa-user-check"></i>
@@ -153,12 +165,21 @@
                     <i class="fas fa-bullhorn"></i>
                     <h4>ประกาศและข่าวสาร</h4>
                 </div>
+                
+                <!-- การ์ด Q&A ไปยังเว็บบอร์ด -->
+                <div class="menu-card menu-forum" onclick="window.location.href='forum.html'">
+                    <i class="fas fa-comments"></i>
+                    <h4>Q&A กระดานถาม-ตอบ</h4>
+                </div>
             </div>
 
+            <!-- ส่วนแสดงข่าวสาร (ฝั่งขวา) -->
             <div class="col-lg-8 col-md-7" id="mainContent">
-                <div class="display-area text-center py-5">
-                    <div class="spinner-border" style="color: var(--stb-red)" role="status"></div>
-                    <p class="mt-3 text-muted">กำลังดึงข้อมูลล่าสุด...</p>
+                <div class="display-area text-center py-5 d-flex flex-column justify-content-center">
+                    <div>
+                        <div class="spinner-border" style="color: var(--stb-red)" role="status"></div>
+                        <p class="mt-3 text-muted">กำลังดึงข้อมูลล่าสุด...</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -166,7 +187,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const scriptUrl = 'https://script.google.com/macros/s/AKfycbwRfsKUyPzM-db3yLg8AodAkEIRR2i0ChiNSpo8LmPd-pZoU3xbdqAL4jt5n9kIzMZR/exec';
+        // *** อัปเดตลิงก์ API ให้เป็นตัวล่าสุดเสมอ ***
+        const scriptUrl = 'https://script.google.com/macros/s/AKfycbxnr0zqjwDx3nmLii061zOnU_Bhvva8UxQ-Qf1beH0EA8eRAOFigiuxrpn_Qihci8DE/exec';
 
         // ฟังก์ชันแปลงวันที่เป็นภาษาไทย พ.ศ.
         const fmtThaiDate = (d) => {
@@ -185,7 +207,7 @@
                     const contentArea = document.getElementById('mainContent');
                     
                     if(latest) {
-                        const img = latest.imageurl || latest.ImageUrl || "";
+                        const img = latest.imageurl || latest.ImageUrl || latest.รูปภาพ || "";
                         const dateVal = latest.date || latest.วันที่ || "";
 
                         contentArea.innerHTML = `
@@ -201,12 +223,16 @@
                                 </div>
                             </div>`;
                     } else {
-                        contentArea.innerHTML = '<div class="display-area text-center">ขณะนี้ยังไม่มีประกาศใหม่</div>';
+                        contentArea.innerHTML = '<div class="display-area text-center py-5">ขณะนี้ยังไม่มีประกาศใหม่</div>';
                     }
                 })
                 .catch(err => {
                     console.error("Fetch error:", err);
-                    document.getElementById('mainContent').innerHTML = '<div class="alert alert-danger">ไม่สามารถโหลดข้อมูลข่าวสารได้</div>';
+                    document.getElementById('mainContent').innerHTML = `
+                        <div class="display-area text-center py-5 text-danger">
+                            <i class="fas fa-exclamation-triangle fa-3x mb-3"></i><br>
+                            ไม่สามารถโหลดข้อมูลข่าวสารได้
+                        </div>`;
                 });
         };
     </script>

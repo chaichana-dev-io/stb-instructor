@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ข่าวสารและประกาศ - STOP THE BLEED INSTRUCTOR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --stb-red: #b3252b;
+            --stb-black: #000000;
+            --stb-white: #ffffff;
+        }
+
+        body { 
+            font-family: 'Sarabun', sans-serif; 
+            background-color: #f8f9fa; 
+            margin: 0; padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Navbar ตามธีมหลัก */
+        .navbar { 
+            background-color: var(--stb-black) !important; 
+            border-bottom: 4px solid var(--stb-red);
+            height: 55px; 
+        }
+
+        /* Coming Soon Section */
+        .coming-soon-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .cs-card {
+            background: white;
+            padding: 50px 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            border-top: 8px solid var(--stb-red);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .cs-icon {
+            font-size: 80px;
+            color: var(--stb-red);
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        .cs-title {
+            font-weight: 800;
+            color: var(--stb-black);
+            font-size: 36px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .cs-subtitle {
+            color: #666;
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .btn-stb-outline {
+            color: var(--stb-red);
+            border: 2px solid var(--stb-red);
+            font-weight: 700;
+            padding: 10px 25px;
+            border-radius: 50px;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .btn-stb-outline:hover {
+            background-color: var(--stb-red);
+            color: white;
+            box-shadow: 0 5px 15px rgba(179, 37, 43, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark shadow-sm">
+        <div class="container d-flex justify-content-between align-items-center">
+            <span class="navbar-brand mb-0 h1" style="font-size: 15px;">
+                <i class="fas fa-bullhorn me-2" style="color: var(--stb-red);"></i>ข่าวสารและประกาศ
+            </span>
+            <a href="index.html" class="btn btn-outline-light btn-sm fw-bold px-3 rounded-pill">
+                <i class="fas fa-home me-1"></i>กลับหน้าหลัก
+            </a>
+        </div>
+    </nav>
+
+    <div class="coming-soon-container">
+        <div class="cs-card">
+            <div class="cs-icon">
+                <i class="fas fa-tools"></i>
+            </div>
+            <h1 class="cs-title">Coming Soon</h1>
+            <p class="cs-subtitle">ระบบข่าวสารและกิจกรรมประกาศ <br>กำลังอยู่ระหว่างการพัฒนา</p>
+            <div class="mt-4">
+                <a href="index.html" class="btn-stb-outline">
+                    <i class="fas fa-arrow-left me-2"></i>ย้อนกลับหน้าหลัก
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center py-3 text-muted" style="font-size: 12px;">
+        © 2026 STOP THE BLEED INSTRUCTOR DIRECTORY BY OXYFIGHT CENTER
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

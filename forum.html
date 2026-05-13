@@ -19,16 +19,26 @@
         .navbar { background-color: var(--stb-black) !important; border-bottom: 4px solid var(--stb-red); height: 55px; }
         .navbar-brand { font-size: 15px; color: white !important; font-weight: 600; }
         .forum-container { max-width: 900px; margin: 30px auto; }
-        .post-card { border-radius: 15px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 15px; background: white; transition: 0.3s; position: relative; }
+        
+        /* การ์ดกระทู้ */
+        .post-card { border-radius: 15px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 20px; background: white; transition: 0.3s; position: relative; overflow: hidden; }
         .post-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        
         .author-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #eee; }
+        .comment-img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
         .btn-stb { background-color: var(--stb-red); color: white; border-radius: 25px; font-weight: 600; border: none; padding: 10px 25px; }
         .hidden { display: none !important; }
         .user-pill { background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 50px; display: flex; align-items: center; gap: 10px; color: white; font-size: 0.85rem; }
         
-        /* ปุ่มลบสำหรับ Admin และผู้ได้รับสิทธิ์ (รหัส 32) */
-        .admin-delete-btn { position: absolute; top: 15px; right: 15px; color: #eee; cursor: pointer; transition: 0.2s; background: none; border: none; padding: 5px; }
-        .admin-delete-btn:hover { color: var(--stb-red); }
+        /* ปุ่มลบสำหรับ Admin (ปรับให้ชัดเจนขึ้น) */
+        .admin-controls { position: absolute; top: 15px; right: 15px; z-index: 10; }
+        .btn-delete-post { background-color: rgba(179, 37, 43, 0.1); color: var(--stb-red); border: 1px solid var(--stb-red); border-radius: 8px; font-size: 12px; font-weight: 700; padding: 4px 12px; transition: 0.2s; }
+        .btn-delete-post:hover { background-color: var(--stb-red); color: white; }
+
+        /* ส่วนของคอมเมนต์ */
+        .comment-item { background: #f9f9f9; border-radius: 10px; padding: 10px; margin-bottom: 8px; border-left: 3px solid var(--stb-red); }
+        .comment-author { font-weight: 700; color: var(--stb-red); font-size: 13px; }
+        .comment-text { font-size: 14px; color: #444; }
     </style>
 </head>
 <body>
@@ -141,14 +151,13 @@
         const pass = document.getElementById('passInput').value.trim();
         if(!pass) return;
 
-        // --- ระบบสิทธิ์พิเศษ ---
+        // แก้ไขสิทธิ์ Admin: ทั้ง 1669 และ 32 ได้สิทธิ์ Role Admin
         if (pass === '1669') {
             currentInstructor = { seq: '1669', name: 'Admin', avatar: 'https://cdn-icons-png.flaticon.com/512/6024/6024190.png', role: 'admin' };
             finalizeLogin(); return;
         }
         
         if (pass === '32') {
-            // เลข 32 ให้สิทธิ์เหมือนแอดมิน (ลบได้) แต่ใช้ชื่ออื่น (ตัวอย่างคือ Authorized User)
             currentInstructor = { seq: '32', name: 'Instructor 32', avatar: 'https://cdn-icons-png.flaticon.com/512/1067/1067357.png', role: 'admin' };
             finalizeLogin(); return;
         }
@@ -193,38 +202,103 @@
         document.getElementById('userNameDisplay').innerText = currentInstructor.name;
     }
 
+    // ฟังก์ชันดึงกระทู้พร้อมคอมเมนต์
     async function loadPosts() {
         const container = document.getElementById('postsList');
-        const { data, error } = await supabaseClient.from('posts').select('*').order('created_at', { ascending: false });
-        if (data) {
-            if (data.length === 0) {
+        const { data: posts, error } = await supabaseClient
+            .from('posts')
+            .select('*, comments(*)')
+            .order('created_at', { ascending: false });
+
+        if (posts) {
+            if (posts.length === 0) {
                 container.innerHTML = '<div class="text-center py-5 text-muted">ยังไม่มีกระทู้</div>';
                 return;
             }
-            container.innerHTML = data.map(p => `
-                <div class="card post-card p-4">
-                    ${currentInstructor.role === 'admin' ? `<button class="admin-delete-btn" onclick="deletePost('${p.id}')"><i class="fas fa-trash-alt"></i></button>` : ''}
-                    <div class="d-flex align-items-center gap-3 mb-3">
-                        <img src="${p.author_avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="author-img">
-                        <div class="w-100">
-                            <div class="d-flex justify-content-between">
-                                <div class="fw-bold text-danger">${p.author_name} ${p.author_seq === '1669' ? '<i class="fas fa-check-circle small"></i>' : ''}</div>
-                                <span class="badge bg-danger rounded-pill">${p.category || 'พูดคุย'}</span>
-                            </div>
-                            <div class="text-muted small">${new Date(p.created_at).toLocaleString('th-TH')}</div>
+
+            container.innerHTML = posts.map(p => {
+                // สร้าง HTML สำหรับรายการคอมเมนต์
+                const commentsHtml = p.comments ? p.comments.sort((a,b) => new Date(a.created_at) - new Date(b.created_at)).map(c => `
+                    <div class="comment-item d-flex gap-2 align-items-start">
+                        <img src="${c.author_avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="comment-img">
+                        <div>
+                            <div class="comment-author">${c.author_name}</div>
+                            <div class="comment-text">${c.message}</div>
                         </div>
                     </div>
-                    <h5 class="fw-bold mb-2">${p.title}</h5>
-                    <p class="text-muted mb-0" style="white-space: pre-wrap;">${p.content}</p>
-                </div>
-            `).join('');
+                `).join('') : '';
+
+                return `
+                    <div class="card post-card p-4">
+                        <!-- ปุ่มลบสำหรับ Admin ที่ชัดเจนขึ้น -->
+                        ${currentInstructor.role === 'admin' ? `
+                            <div class="admin-controls">
+                                <button class="btn-delete-post" onclick="deletePost('${p.id}')">
+                                    <i class="fas fa-trash-alt me-1"></i> ลบกระทู้
+                                </button>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <img src="${p.author_avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="author-img">
+                            <div class="w-100">
+                                <div class="d-flex justify-content-between">
+                                    <div class="fw-bold text-danger">
+                                        ${p.author_name} 
+                                        ${p.author_seq === '1669' ? '<i class="fas fa-check-circle small ms-1"></i>' : ''}
+                                    </div>
+                                    <span class="badge bg-danger rounded-pill">${p.category || 'พูดคุย'}</span>
+                                </div>
+                                <div class="text-muted small">${new Date(p.created_at).toLocaleString('th-TH')}</div>
+                            </div>
+                        </div>
+                        <h5 class="fw-bold mb-2">${p.title}</h5>
+                        <p class="text-muted mb-4" style="white-space: pre-wrap;">${p.content}</p>
+                        
+                        <hr class="my-3 opacity-25">
+                        
+                        <!-- ส่วนแสดงคอมเมนต์ -->
+                        <div id="comment-container-${p.id}">
+                            ${commentsHtml}
+                        </div>
+
+                        <!-- ช่องพิมพ์ตอบกลับ -->
+                        <div class="input-group input-group-sm mt-3">
+                            <input type="text" id="reply-input-${p.id}" class="form-control border-danger" placeholder="เขียนข้อความตอบกลับที่นี่...">
+                            <button class="btn btn-danger px-3" onclick="submitComment('${p.id}')">ส่ง</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+
+    // ฟังก์ชันส่งคอมเมนต์
+    async function submitComment(postId) {
+        const input = document.getElementById(`reply-input-${postId}`);
+        const message = input.value.trim();
+        if(!message) return;
+
+        const { error } = await supabaseClient.from('comments').insert([{
+            post_id: postId,
+            message: message,
+            author_name: currentInstructor.name,
+            author_seq: currentInstructor.seq,
+            author_avatar: currentInstructor.avatar
+        }]);
+
+        if(!error) {
+            input.value = '';
+            loadPosts(); 
+        } else {
+            Swal.fire('Error', 'ไม่สามารถตอบกลับได้: ' + error.message, 'error');
         }
     }
 
     async function deletePost(postId) {
         const confirm = await Swal.fire({
             title: 'ยืนยันการลบ?',
-            text: "ข้อมูลจะหายไปถาวร",
+            text: "กระทู้และคำตอบทั้งหมดจะหายไปถาวร",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#b3252b',
@@ -233,7 +307,10 @@
         });
         if (confirm.isConfirmed) {
             const { error } = await supabaseClient.from('posts').delete().match({ id: postId });
-            if (!error) { Swal.fire('สำเร็จ', 'ลบกระทู้เรียบร้อย', 'success'); loadPosts(); }
+            if (!error) { 
+                Swal.fire({ icon: 'success', title: 'ลบเรียบร้อย', showConfirmButton: false, timer: 1000 });
+                loadPosts(); 
+            }
         }
     }
 
@@ -241,11 +318,15 @@
         const title = document.getElementById('postTitle').value.trim();
         const content = document.getElementById('postContent').value.trim();
         const category = document.getElementById('postCategory').value;
-        if(!title || !content) return;
+        if(!title || !content) return Swal.fire('แจ้งเตือน', 'กรุณากรอกข้อมูลให้ครบ', 'warning');
 
         const { error } = await supabaseClient.from('posts').insert([{
-            title, content, category,
-            author_name: currentInstructor.name, author_seq: currentInstructor.seq, author_avatar: currentInstructor.avatar
+            title: title, 
+            content: content, 
+            category: category,
+            author_name: currentInstructor.name, 
+            author_seq: currentInstructor.seq, 
+            author_avatar: currentInstructor.avatar
         }]);
 
         if(!error) {
@@ -253,6 +334,8 @@
             loadPosts();
             document.getElementById('postTitle').value = '';
             document.getElementById('postContent').value = '';
+        } else {
+            Swal.fire('Error', error.message, 'error');
         }
     }
 

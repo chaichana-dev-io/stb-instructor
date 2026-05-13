@@ -19,12 +19,16 @@
         .navbar { background-color: var(--stb-black) !important; border-bottom: 4px solid var(--stb-red); height: 55px; }
         .navbar-brand { font-size: 15px; color: white !important; font-weight: 600; }
         .forum-container { max-width: 900px; margin: 30px auto; }
-        .post-card { border-radius: 15px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 15px; background: white; transition: 0.3s; }
+        .post-card { border-radius: 15px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 15px; background: white; transition: 0.3s; position: relative; }
         .post-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         .author-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #eee; }
         .btn-stb { background-color: var(--stb-red); color: white; border-radius: 25px; font-weight: 600; border: none; padding: 10px 25px; }
         .hidden { display: none !important; }
         .user-pill { background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 50px; display: flex; align-items: center; gap: 10px; color: white; font-size: 0.85rem; }
+        
+        /* ปุ่มลบสำหรับ Admin และผู้ได้รับสิทธิ์ (รหัส 32) */
+        .admin-delete-btn { position: absolute; top: 15px; right: 15px; color: #eee; cursor: pointer; transition: 0.2s; background: none; border: none; padding: 5px; }
+        .admin-delete-btn:hover { color: var(--stb-red); }
     </style>
 </head>
 <body>
@@ -60,11 +64,10 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 20px;">
             <div class="modal-body p-5 text-center">
-                <i class="fas fa-lock-open fa-3x text-danger mb-4"></i>
-                <h4 class="fw-bold mb-3">เข้าสู่พื้นที่เฉพาะสมาชิก</h4>
-                <p class="text-muted small mb-4">กรุณากรอกรหัสผ่านเพื่อยืนยันตัวตนผู้สอน</p>
-                <!-- ช่องกรอกรหัสผ่าน (เพิ่ม Event Listener ใน JS ด้านล่าง) -->
-                <input type="password" id="passInput" class="form-control form-control-lg text-center fw-bold mb-3" placeholder="ระบุรหัสผ่านที่นี่">
+                <i class="fas fa-user-shield fa-3x text-danger mb-4"></i>
+                <h4 class="fw-bold mb-3">พื้นที่จัดการระบบ</h4>
+                <p class="text-muted small mb-4">กรุณากรอกรหัสผ่านเพื่อยืนยันตัวตน</p>
+                <input type="password" id="passInput" class="form-control form-control-lg text-center fw-bold mb-3" placeholder="ระบุรหัสผ่าน">
                 <button class="btn btn-danger w-100 btn-lg fw-bold" onclick="handleLogin()">ยืนยันสิทธิ์</button>
             </div>
         </div>
@@ -80,6 +83,7 @@
                 <select id="postCategory" class="form-select mb-3">
                     <option value="พูดคุยทั่วไป">พูดคุยทั่วไป</option>
                     <option value="เทคนิคการสอน">เทคนิคการสอน</option>
+                    <option value="อุปกรณ์การแพทย์">อุปกรณ์การแพทย์</option>
                 </select>
                 <input type="text" id="postTitle" class="form-control mb-3" placeholder="หัวข้อคำถาม">
                 <textarea id="postContent" class="form-control mb-3" rows="5" placeholder="รายละเอียด..."></textarea>
@@ -112,13 +116,9 @@
             supabaseClient = window.supabase.createClient(CONFIG.SB_URL, CONFIG.SB_KEY);
             authModal = new bootstrap.Modal(document.getElementById('loginModal'));
             
-            // --- เพิ่มระบบกด Enter สำหรับเข้าสู่ระบบ ---
             const passInputEl = document.getElementById('passInput');
             passInputEl.addEventListener('keypress', function(event) {
-                if (event.key === 'Enter') {
-                    event.preventDefault(); // ป้องกันไม่ให้เกิดพฤติกรรมแปลกๆ ของฟอร์ม
-                    handleLogin(); // เรียกใช้ฟังก์ชันล็อกอินเหมือนตอนกดปุ่ม
-                }
+                if (event.key === 'Enter') { handleLogin(); }
             });
 
             checkSession();
@@ -133,7 +133,6 @@
             loadPosts();
         } else {
             authModal.show();
-            // นำ Cursor ไปกระพริบรอที่ช่องรหัสผ่านทันทีที่ Modal เปิดขึ้นมา
             setTimeout(() => { document.getElementById('passInput').focus(); }, 500);
         }
     }
@@ -142,7 +141,19 @@
         const pass = document.getElementById('passInput').value.trim();
         if(!pass) return;
 
-        Swal.fire({ title: 'ตรวจสอบรหัสผ่าน...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        // --- ระบบสิทธิ์พิเศษ ---
+        if (pass === '1669') {
+            currentInstructor = { seq: '1669', name: 'Admin', avatar: 'https://cdn-icons-png.flaticon.com/512/6024/6024190.png', role: 'admin' };
+            finalizeLogin(); return;
+        }
+        
+        if (pass === '32') {
+            // เลข 32 ให้สิทธิ์เหมือนแอดมิน (ลบได้) แต่ใช้ชื่ออื่น (ตัวอย่างคือ Authorized User)
+            currentInstructor = { seq: '32', name: 'Instructor 32', avatar: 'https://cdn-icons-png.flaticon.com/512/1067/1067357.png', role: 'admin' };
+            finalizeLogin(); return;
+        }
+
+        Swal.fire({ title: 'กำลังตรวจสอบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
         try {
             const res = await fetch(`${CONFIG.GAS}?action=getMembers&t=${Date.now()}`);
@@ -153,22 +164,26 @@
                 currentInstructor = {
                     seq: pass,
                     name: instructor.fullName || instructor.ชื่อนามสกุล || instructor.fullname,
-                    avatar: instructor.imageUrl || instructor.imageurl || ''
+                    avatar: instructor.imageUrl || instructor.imageurl || '',
+                    role: 'user'
                 };
                 if(currentInstructor.avatar.includes('id=')) {
                     currentInstructor.avatar = `https://drive.google.com/thumbnail?id=${currentInstructor.avatar.split('id=')[1].split('&')[0]}&sz=w200`;
                 }
-                localStorage.setItem('stb_instructor', JSON.stringify(currentInstructor));
-                Swal.close();
-                authModal.hide();
-                showUI();
-                loadPosts();
+                finalizeLogin();
             } else { 
                 Swal.fire('ผิดพลาด', 'รหัสผ่านไม่ถูกต้อง', 'error'); 
-                document.getElementById('passInput').value = ''; // เคลียร์ช่องให้กรอกใหม่
-                setTimeout(() => { document.getElementById('passInput').focus(); }, 500); // กลับมาโฟกัสที่เดิม
+                document.getElementById('passInput').value = '';
             }
         } catch (e) { Swal.fire('Error', 'ระบบขัดข้อง', 'error'); }
+    }
+
+    function finalizeLogin() {
+        localStorage.setItem('stb_instructor', JSON.stringify(currentInstructor));
+        if (Swal.isVisible()) Swal.close();
+        authModal.hide();
+        showUI();
+        loadPosts();
     }
 
     function showUI() {
@@ -188,11 +203,12 @@
             }
             container.innerHTML = data.map(p => `
                 <div class="card post-card p-4">
+                    ${currentInstructor.role === 'admin' ? `<button class="admin-delete-btn" onclick="deletePost('${p.id}')"><i class="fas fa-trash-alt"></i></button>` : ''}
                     <div class="d-flex align-items-center gap-3 mb-3">
                         <img src="${p.author_avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="author-img">
                         <div class="w-100">
                             <div class="d-flex justify-content-between">
-                                <div class="fw-bold text-danger">${p.author_name}</div>
+                                <div class="fw-bold text-danger">${p.author_name} ${p.author_seq === '1669' ? '<i class="fas fa-check-circle small"></i>' : ''}</div>
                                 <span class="badge bg-danger rounded-pill">${p.category || 'พูดคุย'}</span>
                             </div>
                             <div class="text-muted small">${new Date(p.created_at).toLocaleString('th-TH')}</div>
@@ -202,6 +218,22 @@
                     <p class="text-muted mb-0" style="white-space: pre-wrap;">${p.content}</p>
                 </div>
             `).join('');
+        }
+    }
+
+    async function deletePost(postId) {
+        const confirm = await Swal.fire({
+            title: 'ยืนยันการลบ?',
+            text: "ข้อมูลจะหายไปถาวร",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#b3252b',
+            confirmButtonText: 'ลบทันที',
+            cancelButtonText: 'ยกเลิก'
+        });
+        if (confirm.isConfirmed) {
+            const { error } = await supabaseClient.from('posts').delete().match({ id: postId });
+            if (!error) { Swal.fire('สำเร็จ', 'ลบกระทู้เรียบร้อย', 'success'); loadPosts(); }
         }
     }
 

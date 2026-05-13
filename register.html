@@ -14,7 +14,22 @@
             --stb-white: #ffffff;
         }
 
-        body { font-family: 'Sarabun', sans-serif; background-color: #f8f9fa; }
+        /* [SECURITY] ป้องกันการคลุมดำเลือกข้อความและรูปภาพ */
+        body { 
+            font-family: 'Sarabun', sans-serif; 
+            background-color: #f8f9fa; 
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* [SECURITY] ป้องกันการลากรูปภาพ */
+        img {
+            -webkit-user-drag: none;
+            user-drag: none;
+            pointer-events: none;
+        }
         
         .navbar { 
             background-color: var(--stb-black) !important; 
@@ -48,6 +63,14 @@
             position: relative; 
         }
         .preview-container img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* ทำให้ input text สามารถเลือกและพิมพ์ได้ปกติ (ยกเว้นเรื่องคลุมดำ) */
+        input, textarea {
+            -webkit-user-select: text !important;
+            -moz-user-select: text !important;
+            -ms-user-select: text !important;
+            user-select: text !important;
+        }
 
         .is-invalid { border-color: var(--stb-red) !important; border-width: 2px !important; }
         .is-valid { border-color: #198754 !important; border-width: 2px !important; }
@@ -86,9 +109,24 @@
             background-color: var(--stb-red);
             color: white;
         }
+
+        /* [SECURITY] หน้าจอพัก (Overlay) */
+        #security-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(20px);
+            z-index: 10000; display: none; justify-content: center; align-items: center;
+            color: white; text-align: center; flex-direction: column;
+        }
     </style>
 </head>
 <body>
+
+<!-- [SECURITY] Overlay สำหรับพักหน้าจอ -->
+<div id="security-overlay">
+    <i class="fas fa-user-shield fa-3x mb-3" style="color: var(--stb-red);"></i>
+    <h4 class="fw-bold">Security Lock</h4>
+    <p>ระบบพักการทำงานชั่วคราวเพื่อความปลอดภัย</p>
+</div>
 
 <div id="loading">
     <div class="spinner-border" style="width: 3.5rem; height: 3.5rem; color: var(--stb-red);"></div>
@@ -100,7 +138,7 @@
         <span class="navbar-brand mb-0 h1" style="font-size: 15px;">
             <i class="fas fa-tint me-2" style="color: var(--stb-red);"></i>ระบบลงทะเบียนผู้สอน
         </span>
-        <a href="index.html" class="btn btn-outline-light btn-sm fw-bold px-3 rounded-pill">
+        <a href="index.html" class="btn btn-outline-light btn-sm fw-bold px-3 rounded-pill" style="pointer-events: auto;">
             <i class="fas fa-home me-1"></i>กลับหน้าหลัก
         </a>
     </div>
@@ -134,7 +172,7 @@
                                 <div class="preview-container mb-3">
                                     <img id="imgPreview" src="https://via.placeholder.com/300x400?text=Instructor+Photo">
                                 </div>
-                                <label class="btn btn-sm btn-outline-stb fw-bold shadow-sm">
+                                <label class="btn btn-sm btn-outline-stb fw-bold shadow-sm" style="pointer-events: auto; cursor: pointer;">
                                     <i class="fas fa-camera me-1"></i> เลือกรูปถ่ายหน้าตรง
                                     <input type="file" id="inpFile" hidden accept="image/*" required>
                                 </label>
@@ -187,7 +225,7 @@
                         </div>
 
                         <div class="mt-5">
-                            <button type="submit" id="btnSubmit" class="btn btn-stb btn-lg w-100 fw-bold rounded-3">
+                            <button type="submit" id="btnSubmit" class="btn btn-stb btn-lg w-100 fw-bold rounded-3" style="pointer-events: auto;">
                                 <i class="fas fa-save me-2"></i>บันทึกข้อมูลและลงทะเบียน
                             </button>
                         </div>
@@ -200,6 +238,20 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    // [SECURITY] ระบบป้องกันการคัดลอกและพักหน้าจอ
+    (function() {
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => {
+            if (e.ctrlKey && ['c','v','s','u','i'].includes(e.key.toLowerCase())) { e.preventDefault(); }
+        });
+        const overlay = document.getElementById('security-overlay');
+        const lock = () => { overlay.style.display = 'flex'; document.title = "Security Lock..."; };
+        const unlock = () => { overlay.style.display = 'none'; document.title = "ลงทะเบียนผู้สอน - STOP THE BLEED INSTRUCTOR"; };
+        document.addEventListener("visibilitychange", () => { if (document.visibilityState === 'hidden') lock(); else unlock(); });
+        window.addEventListener('blur', lock);
+        window.addEventListener('focus', unlock);
+    })();
+
     const scriptUrl = 'https://script.google.com/macros/s/AKfycbwRfsKUyPzM-db3yLg8AodAkEIRR2i0ChiNSpo8LmPd-pZoU3xbdqAL4jt5n9kIzMZR/exec';
     let membersRAM = [];
     let isDataLoaded = false;
@@ -209,7 +261,6 @@
         try {
             const res = await fetch(`${scriptUrl}?action=getMembers&t=${Date.now()}`);
             const data = await res.json();
-            // ตรวจสอบทั้ง key ตัวเล็กและตัวใหญ่จาก .gs
             membersRAM = data.map(m => String(m.sequence || m.ลำดับ));
             isDataLoaded = true;
         } catch (e) { console.error("Load members error"); }

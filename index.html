@@ -15,10 +15,22 @@
             --stb-white: #ffffff;
         }
 
+        /* [SECURITY] ป้องกันการคลุมดำเลือกข้อความและรูปภาพ */
         body { 
             font-family: 'Sarabun', sans-serif; 
             background-color: #fcfcfc; 
             margin: 0; padding: 0; 
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* [SECURITY] ป้องกันการลากรูปภาพ */
+        img {
+            -webkit-user-drag: none;
+            user-drag: none;
+            pointer-events: none;
         }
 
         .navbar { 
@@ -40,6 +52,7 @@
             width: auto; 
             margin-bottom: 15px;
             filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+            pointer-events: none; /* เพิ่มเติมสำหรับภาพโลโก้ */
         }
         
         .text-container h1 { 
@@ -81,7 +94,6 @@
         .menu-card i { font-size: 24px; margin-right: 20px; width: 40px; text-align: center; }
         .menu-card h4 { font-weight: 600; font-size: 16px; margin: 0; }
 
-        /* ปรับสีให้การ์ด Q&A เด่นขึ้นนิดนึง (สีดำ-แดง) */
         .menu-forum {
             background: linear-gradient(135deg, #222, #000);
             border-left: 5px solid var(--stb-red);
@@ -121,6 +133,14 @@
             color: white;
         }
 
+        /* [SECURITY] หน้าจอพัก (Overlay) */
+        #security-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(20px);
+            z-index: 10000; display: none; justify-content: center; align-items: center;
+            color: white; text-align: center; flex-direction: column;
+        }
+
         @media (max-width: 991px) {
             .text-container h1 { font-size: 26px; }
             .logo-container img { height: 110px; }
@@ -128,6 +148,13 @@
     </style>
 </head>
 <body>
+
+    <!-- [SECURITY] Overlay สำหรับพักหน้าจอ -->
+    <div id="security-overlay">
+        <i class="fas fa-user-shield fa-3x mb-3" style="color: var(--stb-red);"></i>
+        <h4 class="fw-bold">Security Lock</h4>
+        <p>ระบบพักการทำงานชั่วคราวเพื่อความปลอดภัย</p>
+    </div>
 
     <nav class="navbar navbar-dark sticky-top">
         <div class="container">
@@ -151,7 +178,6 @@
 
     <div class="container py-2 mb-5">
         <div class="row g-4">
-            <!-- ส่วนของปุ่มเมนู (ฝั่งซ้าย) -->
             <div class="col-lg-4 col-md-5">
                 <div class="menu-card" onclick="window.location.href='register.html'">
                     <i class="fas fa-user-check"></i>
@@ -165,15 +191,12 @@
                     <i class="fas fa-bullhorn"></i>
                     <h4>ประกาศและข่าวสาร</h4>
                 </div>
-                
-                <!-- การ์ด Q&A ไปยังเว็บบอร์ด -->
                 <div class="menu-card menu-forum" onclick="window.location.href='forum.html'">
                     <i class="fas fa-comments"></i>
                     <h4>Q&A กระดานถาม-ตอบ</h4>
                 </div>
             </div>
 
-            <!-- ส่วนแสดงข่าวสาร (ฝั่งขวา) -->
             <div class="col-lg-8 col-md-7" id="mainContent">
                 <div class="display-area text-center py-5 d-flex flex-column justify-content-center">
                     <div>
@@ -187,10 +210,37 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // *** อัปเดตลิงก์ API ให้เป็นตัวล่าสุดเสมอ ***
+        // [SECURITY] ระบบป้องกันการคัดลอกและพักหน้าจอ
+        (function() {
+            // ป้องกันคลิกขวา
+            document.addEventListener('contextmenu', e => e.preventDefault());
+            
+            // ป้องกันปุ่มลัด Ctrl+C, Ctrl+V, Ctrl+S, Ctrl+U, Ctrl+I
+            document.addEventListener('keydown', e => {
+                if (e.ctrlKey && ['c','v','s','u','i'].includes(e.key.toLowerCase())) {
+                    e.preventDefault();
+                }
+            });
+
+            const overlay = document.getElementById('security-overlay');
+            const lock = () => { 
+                overlay.style.display = 'flex'; 
+                document.title = "Security Lock...";
+            };
+            const unlock = () => { 
+                overlay.style.display = 'none'; 
+                document.title = "STOP THE BLEED INSTRUCTOR - OXYFIGHT CENTER";
+            };
+
+            document.addEventListener("visibilitychange", () => {
+                if (document.visibilityState === 'hidden') lock(); else unlock();
+            });
+            window.addEventListener('blur', lock);
+            window.addEventListener('focus', unlock);
+        })();
+
         const scriptUrl = 'https://script.google.com/macros/s/AKfycbxnr0zqjwDx3nmLii061zOnU_Bhvva8UxQ-Qf1beH0EA8eRAOFigiuxrpn_Qihci8DE/exec';
 
-        // ฟังก์ชันแปลงวันที่เป็นภาษาไทย พ.ศ.
         const fmtThaiDate = (d) => {
             if (!d) return "-";
             const date = new Date(d);

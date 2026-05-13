@@ -60,7 +60,6 @@
     </div>
     
     <div id="postsList">
-        <!-- Spinner โหลดข้อมูล -->
         <div class="text-center py-5">
             <div class="spinner-border text-danger" style="width: 3rem; height: 3rem;"></div>
             <div class="mt-2 text-muted fw-bold">กำลังโหลดข้อมูล...</div>
@@ -68,7 +67,7 @@
     </div>
 </div>
 
-<!-- Modal: Login (รหัสผ่าน) -->
+<!-- Modal: Login -->
 <div class="modal fade" id="loginModal" data-bs-backdrop="static" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 15px 50px rgba(0,0,0,0.2);">
@@ -76,14 +75,14 @@
                 <i class="fas fa-lock-open fa-3x text-danger mb-4"></i>
                 <h4 class="fw-bold mb-3">เข้าสู่พื้นที่เฉพาะสมาชิก</h4>
                 <p class="text-muted small mb-4">กรุณากรอกรหัสผ่านเพื่อยืนยันตัวตนผู้สอน</p>
-                <input type="password" id="passInput" class="form-control form-control-lg text-center fw-bold mb-3" placeholder="ระบุรหัสผ่านที่นี่" style="border-radius: 12px; border: 2px solid #eee;">
-                <button class="btn btn-danger w-100 btn-lg fw-bold" onclick="handleLogin()" style="border-radius: 12px;">ยืนยันสิทธิ์</button>
+                <input type="password" id="passInput" class="form-control form-control-lg text-center fw-bold mb-3" placeholder="ระบุรหัสผ่านที่นี่">
+                <button class="btn btn-danger w-100 btn-lg fw-bold" onclick="handleLogin()">ยืนยันสิทธิ์</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal: ตั้งกระทู้ -->
+<!-- Modal: New Post -->
 <div class="modal fade" id="addPostModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content" style="border-radius: 15px;">
@@ -103,11 +102,11 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-bold">หัวข้อคำถาม</label>
-                    <input type="text" id="postTitle" class="form-control" placeholder="ระบุหัวข้อคำถามสั้นๆ ได้ใจความ">
+                    <input type="text" id="postTitle" class="form-control" placeholder="ระบุหัวข้อคำถาม">
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-bold">รายละเอียด</label>
-                    <textarea id="postContent" class="form-control" rows="5" placeholder="อธิบายรายละเอียดที่ต้องการสอบถาม..."></textarea>
+                    <textarea id="postContent" class="form-control" rows="5" placeholder="รายละเอียด..."></textarea>
                 </div>
             </div>
             <div class="modal-footer border-0 p-4 pt-0">
@@ -123,33 +122,28 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-    // 1. ตั้งค่าการเชื่อมต่อ (Configuration)
+    // --- Configuration ---
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbxnr0zqjwDx3nmLii061zOnU_Bhvva8UxQ-Qf1beH0EA8eRAOFigiuxrpn_Qihci8DE/exec';
     const SUPABASE_URL = 'https://cvtpzuqmensoigxzmwrk.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2dHB6dXFtZW5zb2lneHptd3JrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MzM5NDEsImV4cCI6MjA5NDIwOTk0MX0.yrpFk48HUihXuhZzLZ6_3yEtZhduU8yRZgQ-VrYUwQY';
     
-    // ประกาศตัวแปรไว้ใช้งาน
+    // ประกาศเพียงครั้งเดียวที่นี่
     let supabase;
     let currentUser = null;
-    let loginModal;
+    let loginModalInstance;
 
-    // 2. เริ่มต้นระบบ
     document.addEventListener('DOMContentLoaded', () => {
-        try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            
-            const modalElement = document.getElementById('loginModal');
-            if (modalElement) {
-                loginModal = new bootstrap.Modal(modalElement);
-                checkAuth();
-            }
-        } catch (err) {
-            console.error("System Init Error:", err);
-            Swal.fire('Error', 'ไม่สามารถเริ่มต้นระบบเว็บบอร์ดได้', 'error');
-        }
+        // 1. Init Supabase
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        // 2. Init Login Modal
+        const modalElement = document.getElementById('loginModal');
+        loginModalInstance = new bootstrap.Modal(modalElement);
+        
+        // 3. Check Authentication
+        checkAuth();
     });
 
-    // 3. ตรวจสอบการ Login
     function checkAuth() {
         const saved = localStorage.getItem('stb_instructor');
         if (saved) {
@@ -159,14 +153,13 @@
                 loadPosts();
             } catch (e) {
                 localStorage.removeItem('stb_instructor');
-                loginModal.show();
+                loginModalInstance.show();
             }
         } else {
-            loginModal.show();
+            loginModalInstance.show();
         }
     }
 
-    // 4. เข้าสู่ระบบ
     async function handleLogin() {
         const pass = document.getElementById('passInput').value.trim();
         if(!pass) return;
@@ -176,131 +169,96 @@
         try {
             const res = await fetch(`${GAS_URL}?action=getMembers&t=${Date.now()}`);
             const members = await res.json();
-            
-            // เช็ครหัสผ่านกับ sequence
             const found = members.find(m => String(m.sequence || m.ลำดับ) === pass);
 
             if (found) {
-                // เก็บข้อมูลเพื่อใช้โพสต์
                 currentUser = {
                     seq: pass,
                     name: found.fullname || found.fullName || found.ชื่อนามสกุล || 'ไม่ระบุชื่อ',
                     avatar: found.imageurl || found.imageUrl || found.รูปภาพ || ''
                 };
                 
-                // แปลงลิงก์รูปให้เป็น Thumbnail
                 if(currentUser.avatar.includes('id=')) {
                     currentUser.avatar = `https://drive.google.com/thumbnail?id=${currentUser.avatar.split('id=')[1].split('&')[0]}&sz=w200`;
                 }
 
                 localStorage.setItem('stb_instructor', JSON.stringify(currentUser));
                 Swal.close();
-                loginModal.hide();
+                loginModalInstance.hide();
                 renderUI();
                 loadPosts();
             } else {
-                Swal.fire('ผิดพลาด', 'รหัสผ่านไม่ถูกต้อง หรือยังไม่ได้ลงทะเบียน', 'error');
+                Swal.fire('ผิดพลาด', 'รหัสผ่านไม่ถูกต้อง', 'error');
             }
         } catch (e) {
-            console.error(e);
-            Swal.fire('Error', 'การเชื่อมต่อระบบขัดข้อง', 'error');
+            Swal.fire('Error', 'การเชื่อมต่อขัดข้อง', 'error');
         }
     }
 
-    // 5. อัปเดตหน้าจอ
     function renderUI() {
         document.getElementById('userInfo').classList.remove('hidden');
         document.getElementById('forumContent').classList.remove('hidden');
-        
-        const avatar = currentUser.avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
-        document.getElementById('userAvatar').src = avatar;
+        document.getElementById('userAvatar').src = currentUser.avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
         document.getElementById('userNameDisplay').innerText = currentUser.name;
     }
 
-    // 6. ดึงข้อมูลกระทู้มาแสดง
     async function loadPosts() {
-        try {
-            const { data, error } = await supabase
-                .from('posts')
-                .select('*')
-                .order('created_at', { ascending: false });
-            
-            const container = document.getElementById('postsList');
-            
-            if (error) throw error;
-
-            if (data.length === 0) {
-                container.innerHTML = '<div class="text-center py-5 text-muted"><i class="fas fa-folder-open fa-3x mb-3 text-secondary"></i><br>ยังไม่มีกระทู้ เริ่มตั้งคำถามแรกได้เลย!</div>';
-                return;
-            }
-
-            container.innerHTML = data.map(p => `
-                <div class="card post-card p-4">
-                    <div class="d-flex align-items-center gap-3 mb-3">
-                        <img src="${p.author_avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="author-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
-                        <div class="w-100">
-                            <div class="d-flex justify-content-between">
-                                <div class="fw-bold text-danger">${p.author_name}</div>
-                                <span class="badge bg-danger rounded-pill">${p.category || 'พูดคุยทั่วไป'}</span>
-                            </div>
-                            <div class="text-muted small"><i class="far fa-clock me-1"></i>${new Date(p.created_at).toLocaleString('th-TH')}</div>
-                        </div>
-                    </div>
-                    <h5 class="fw-bold mb-2">${p.title}</h5>
-                    <p class="text-muted mb-0" style="white-space: pre-wrap;">${p.content}</p>
-                </div>
-            `).join('');
-            
-        } catch (err) {
-            console.error("Load Posts Error:", err);
-            document.getElementById('postsList').innerHTML = '<div class="text-center text-danger">ไม่สามารถโหลดข้อมูลได้</div>';
+        const container = document.getElementById('postsList');
+        const { data, error } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
+        
+        if (error) {
+            container.innerHTML = '<div class="text-center text-danger">ไม่สามารถโหลดข้อมูลได้</div>';
+            return;
         }
+
+        if (data.length === 0) {
+            container.innerHTML = '<div class="text-center py-5 text-muted">ยังไม่มีกระทู้ในขณะนี้</div>';
+            return;
+        }
+
+        container.innerHTML = data.map(p => `
+            <div class="card post-card p-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <img src="${p.author_avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="author-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
+                    <div class="w-100">
+                        <div class="d-flex justify-content-between">
+                            <div class="fw-bold text-danger">${p.author_name}</div>
+                            <span class="badge bg-danger rounded-pill">${p.category || 'พูดคุยทั่วไป'}</span>
+                        </div>
+                        <div class="text-muted small">${new Date(p.created_at).toLocaleString('th-TH')}</div>
+                    </div>
+                </div>
+                <h5 class="fw-bold mb-2">${p.title}</h5>
+                <p class="text-muted mb-0" style="white-space: pre-wrap;">${p.content}</p>
+            </div>
+        `).join('');
     }
 
-    // 7. ตั้งกระทู้ใหม่
     async function submitPost() {
         const title = document.getElementById('postTitle').value.trim();
         const content = document.getElementById('postContent').value.trim();
         const category = document.getElementById('postCategory').value;
-        
-        if(!title || !content) {
-            return Swal.fire('แจ้งเตือน', 'กรุณากรอกหัวข้อและรายละเอียด', 'warning');
-        }
+        if(!title || !content) return Swal.fire('แจ้งเตือน', 'กรุณากรอกข้อมูลให้ครบ', 'warning');
 
-        // ปุ่มแสดงสถานะกำลังบันทึก
         const btn = document.querySelector('.modal-footer .btn-stb');
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> กำลังส่ง...';
         btn.disabled = true;
 
         const { error } = await supabase.from('posts').insert([{
-            title: title, 
-            content: content,
-            category: category,
+            title, content, category,
             author_name: currentUser.name, 
             author_seq: currentUser.seq, 
             author_avatar: currentUser.avatar
         }]);
 
-        btn.innerHTML = 'โพสต์กระทู้';
-        btn.disabled = false;
-
         if(!error) {
             bootstrap.Modal.getInstance(document.getElementById('addPostModal')).hide();
-            Swal.fire({ icon: 'success', title: 'ตั้งกระทู้สำเร็จ', showConfirmButton: false, timer: 1500 });
-            
+            loadPosts();
             document.getElementById('postTitle').value = '';
             document.getElementById('postContent').value = '';
-            
-            // ให้หน้าจอแสดงว่ากำลังโหลดข้อมูลใหม่
-            document.getElementById('postsList').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-danger"></div></div>';
-            loadPosts();
-        } else {
-            Swal.fire('Error', 'ไม่สามารถตั้งกระทู้ได้', 'error');
-            console.error("Insert Error:", error);
         }
+        btn.disabled = false;
     }
 
-    // 8. ออกจากระบบ
     function logout() {
         localStorage.removeItem('stb_instructor');
         location.reload();

@@ -21,7 +21,17 @@
         .forum-container { max-width: 900px; margin: 30px auto; }
         
         /* การ์ดกระทู้ */
-        .post-card { border-radius: 15px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 25px; background: white; position: relative; overflow: hidden; transition: 0.3s; }
+        .post-card { 
+            border-radius: 15px; 
+            border: none; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
+            margin-bottom: 25px; 
+            background: white; 
+            position: relative; 
+            overflow: hidden; 
+            transition: 0.3s;
+            padding-bottom: 60px !important; /* เพิ่มที่ว่างด้านล่างสำหรับปุ่ม */
+        }
         .post-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         
         .author-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #eee; }
@@ -30,12 +40,40 @@
         .hidden { display: none !important; }
         .user-pill { background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 50px; display: flex; align-items: center; gap: 10px; color: white; font-size: 0.85rem; }
         
-        /* ปุ่มจัดการสำหรับ Admin และเจ้าของ */
-        .admin-controls { position: absolute; top: 15px; right: 15px; z-index: 10; display: flex; gap: 5px; }
-        .btn-delete-post { background-color: rgba(179, 37, 43, 0.1); color: var(--stb-red); border: 1px solid var(--stb-red); border-radius: 8px; font-size: 12px; font-weight: 700; padding: 4px 12px; transition: 0.2s; }
-        .btn-delete-post:hover { background-color: var(--stb-red); color: white; }
-        .btn-edit-post { background-color: rgba(13, 110, 253, 0.1); color: #0d6efd; border: 1px solid #0d6efd; border-radius: 8px; font-size: 12px; font-weight: 700; padding: 4px 12px; transition: 0.2s; }
-        .btn-edit-post:hover { background-color: #0d6efd; color: white; }
+        /* ปุ่มจัดการย้ายมามุมล่างขวา */
+        .admin-controls { 
+            position: absolute; 
+            bottom: 15px; 
+            right: 15px; 
+            z-index: 10; 
+            display: flex; 
+            gap: 8px; 
+        }
+        .btn-delete-post { 
+            background-color: var(--stb-red); 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 12px; 
+            font-weight: 700; 
+            padding: 6px 14px; 
+            transition: 0.2s; 
+            box-shadow: 0 4px 10px rgba(179, 37, 43, 0.2);
+        }
+        .btn-delete-post:hover { background-color: #8a1d21; transform: scale(1.05); }
+        
+        .btn-edit-post { 
+            background-color: #0d6efd; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 12px; 
+            font-weight: 700; 
+            padding: 6px 14px; 
+            transition: 0.2s;
+            box-shadow: 0 4px 10px rgba(13, 110, 253, 0.2);
+        }
+        .btn-edit-post:hover { background-color: #0b5ed7; transform: scale(1.05); }
 
         /* ส่วนของคอมเมนต์ */
         .comment-item { background: #fdfdfd; border-radius: 10px; padding: 10px; margin-bottom: 8px; border-left: 3px solid #ddd; }
@@ -121,7 +159,7 @@
                 <textarea id="editPostContent" class="form-control mb-3" rows="5" placeholder="รายละเอียด..."></textarea>
                 <div class="text-end">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">ยกเลิก</button>
-                    <button type="button" class="btn btn-primary rounded-pill px-4" onclick="updatePost()">บันทึกการแก้ไข</button>
+                    <button type="button" class="btn-primary btn rounded-pill px-4" onclick="updatePost()">บันทึกการแก้ไข</button>
                 </div>
             </div>
         </div>
@@ -256,7 +294,10 @@
                             <img src="${p.author_avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="author-img">
                             <div class="w-100">
                                 <div class="d-flex justify-content-between pe-5">
-                                    <div class="fw-bold text-danger">${p.author_name} ${p.author_seq === '1669' ? '<i class="fas fa-check-circle small ms-1"></i>' : ''}</div>
+                                    <div class="fw-bold text-danger">
+                                        ${p.author_name} 
+                                        ${p.author_seq === '1669' ? '<i class="fas fa-check-circle small ms-1"></i>' : ''}
+                                    </div>
                                     <span class="badge bg-danger rounded-pill">${p.category || 'พูดคุย'}</span>
                                 </div>
                                 <div class="text-muted small">${new Date(p.created_at).toLocaleString('th-TH')}</div>
@@ -267,7 +308,7 @@
                         <hr class="my-3 opacity-25">
                         <div id="comments-${p.id}">${commentsHtml}</div>
                         <div class="input-group input-group-sm mt-3">
-                            <input type="text" id="reply-${p.id}" class="form-control border-danger" placeholder="พิมพ์ข้อความตอบกลับ...">
+                            <input type="text" id="reply-${p.id}" class="form-control" placeholder="เขียนข้อความตอบกลับ...">
                             <button class="btn btn-danger" onclick="submitComment('${p.id}')">ส่ง</button>
                         </div>
                     </div>`;
@@ -331,11 +372,15 @@
         const title = document.getElementById('postTitle').value.trim();
         const content = document.getElementById('postContent').value.trim();
         const category = document.getElementById('postCategory').value;
-        if(!title || !content) return;
+        if(!title || !content) return Swal.fire('แจ้งเตือน', 'กรุณากรอกข้อมูลให้ครบ', 'warning');
 
         const { error } = await supabaseClient.from('posts').insert([{
-            title, content, category,
-            author_name: currentInstructor.name, author_seq: currentInstructor.seq, author_avatar: currentInstructor.avatar
+            title: title, 
+            content: content, 
+            category: category,
+            author_name: currentInstructor.name, 
+            author_seq: currentInstructor.seq, 
+            author_avatar: currentInstructor.avatar
         }]);
 
         if(!error) {
@@ -343,6 +388,8 @@
             loadPosts();
             document.getElementById('postTitle').value = '';
             document.getElementById('postContent').value = '';
+        } else {
+            Swal.fire('Error', error.message, 'error');
         }
     }
 

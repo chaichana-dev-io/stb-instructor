@@ -7,6 +7,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- ปิด Error favicon -->
+    <link rel="icon" href="data:,">
     <style>
         :root {
             --stb-red: #b3252b;
@@ -15,18 +17,13 @@
         }
 
         body { font-family: 'Sarabun', sans-serif; background-color: #f8f9fa; }
-        
         .navbar { background-color: var(--stb-black) !important; border-bottom: 4px solid var(--stb-red); height: 55px; }
         .navbar-brand { font-size: 15px; color: white !important; font-weight: 600; }
-
         .forum-container { max-width: 900px; margin: 30px auto; }
         .post-card { border-radius: 15px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 15px; background: white; transition: 0.3s; }
         .post-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        
         .author-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #eee; }
-        .btn-stb { background-color: var(--stb-red); color: white; border-radius: 25px; font-weight: 600; border: none; padding: 10px 25px; transition: 0.2s; }
-        .btn-stb:hover { background-color: #8a1d21; color: white; }
-
+        .btn-stb { background-color: var(--stb-red); color: white; border-radius: 25px; font-weight: 600; border: none; padding: 10px 25px; }
         .hidden { display: none !important; }
         .user-pill { background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 50px; display: flex; align-items: center; gap: 10px; color: white; font-size: 0.85rem; }
     </style>
@@ -43,9 +40,7 @@
                 <img id="userAvatar" src="" style="width: 25px; height: 25px; border-radius: 50%; object-fit: cover;">
                 <span id="userNameDisplay" class="fw-bold d-none d-sm-inline"></span>
             </div>
-            <a href="index.html" class="btn btn-outline-light btn-sm fw-bold px-3 rounded-pill me-2">
-                <i class="fas fa-home me-1"></i>หน้าหลัก
-            </a>
+            <a href="index.html" class="btn btn-outline-light btn-sm fw-bold px-3 rounded-pill me-2"><i class="fas fa-home me-1"></i>หน้าหลัก</a>
             <button class="btn btn-danger btn-sm rounded-pill" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
         </div>
     </div>
@@ -54,23 +49,17 @@
 <div class="container forum-container hidden" id="forumContent">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="fw-bold"><i class="fas fa-list-ul me-2 text-danger"></i>กระทู้ถาม-ตอบ</h3>
-        <button class="btn-stb" data-bs-toggle="modal" data-bs-target="#addPostModal">
-            <i class="fas fa-plus me-2"></i>ตั้งคำถามใหม่
-        </button>
+        <button class="btn-stb" data-bs-toggle="modal" data-bs-target="#addPostModal"><i class="fas fa-plus me-2"></i>ตั้งคำถามใหม่</button>
     </div>
-    
     <div id="postsList">
-        <div class="text-center py-5">
-            <div class="spinner-border text-danger" style="width: 3rem; height: 3rem;"></div>
-            <div class="mt-2 text-muted fw-bold">กำลังโหลดข้อมูล...</div>
-        </div>
+        <div class="text-center py-5"><div class="spinner-border text-danger"></div></div>
     </div>
 </div>
 
 <!-- Modal: Login -->
 <div class="modal fade" id="loginModal" data-bs-backdrop="static" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 15px 50px rgba(0,0,0,0.2);">
+        <div class="modal-content" style="border-radius: 20px;">
             <div class="modal-body p-5 text-center">
                 <i class="fas fa-lock-open fa-3x text-danger mb-4"></i>
                 <h4 class="fw-bold mb-3">เข้าสู่พื้นที่เฉพาะสมาชิก</h4>
@@ -82,36 +71,22 @@
     </div>
 </div>
 
-<!-- Modal: New Post -->
+<!-- Modal: Add Post -->
 <div class="modal fade" id="addPostModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content" style="border-radius: 15px;">
-            <div class="modal-header border-0 p-4 pb-0">
-                <h5 class="modal-title fw-bold text-danger"><i class="fas fa-edit me-2"></i>ระบุคำถามของคุณ</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
             <div class="modal-body p-4">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">หมวดหมู่</label>
-                    <select id="postCategory" class="form-select">
-                        <option value="พูดคุยทั่วไป">พูดคุยทั่วไป</option>
-                        <option value="เทคนิคการสอน">เทคนิคการสอน</option>
-                        <option value="อุปกรณ์การแพทย์">อุปกรณ์การแพทย์</option>
-                        <option value="คำถามจากนักเรียน">คำถามจากนักเรียน</option>
-                    </select>
+                <h5 class="fw-bold text-danger mb-3">ระบุคำถามของคุณ</h5>
+                <select id="postCategory" class="form-select mb-3">
+                    <option value="พูดคุยทั่วไป">พูดคุยทั่วไป</option>
+                    <option value="เทคนิคการสอน">เทคนิคการสอน</option>
+                </select>
+                <input type="text" id="postTitle" class="form-control mb-3" placeholder="หัวข้อคำถาม">
+                <textarea id="postContent" class="form-control mb-3" rows="5" placeholder="รายละเอียด..."></textarea>
+                <div class="text-end">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" class="btn-stb" onclick="submitPost()">โพสต์กระทู้</button>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">หัวข้อคำถาม</label>
-                    <input type="text" id="postTitle" class="form-control" placeholder="ระบุหัวข้อคำถาม">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">รายละเอียด</label>
-                    <textarea id="postContent" class="form-control" rows="5" placeholder="รายละเอียด..."></textarea>
-                </div>
-            </div>
-            <div class="modal-footer border-0 p-4 pt-0">
-                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">ยกเลิก</button>
-                <button type="button" class="btn-stb" onclick="submitPost()">โพสต์กระทู้</button>
             </div>
         </div>
     </div>
@@ -122,41 +97,34 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-    // --- Configuration ---
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxnr0zqjwDx3nmLii061zOnU_Bhvva8UxQ-Qf1beH0EA8eRAOFigiuxrpn_Qihci8DE/exec';
-    const SUPABASE_URL = 'https://cvtpzuqmensoigxzmwrk.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2dHB6dXFtZW5zb2lneHptd3JrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MzM5NDEsImV4cCI6MjA5NDIwOTk0MX0.yrpFk48HUihXuhZzLZ6_3yEtZhduU8yRZgQ-VrYUwQY';
+    // --- ประกาศตัวแปรเพียงครั้งเดียวที่ต้นไฟล์ ---
+    const CONFIG = {
+        GAS: 'https://script.google.com/macros/s/AKfycbxnr0zqjwDx3nmLii061zOnU_Bhvva8UxQ-Qf1beH0EA8eRAOFigiuxrpn_Qihci8DE/exec',
+        SB_URL: 'https://cvtpzuqmensoigxzmwrk.supabase.co',
+        SB_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2dHB6dXFtZW5zb2lneHptd3JrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MzM5NDEsImV4cCI6MjA5NDIwOTk0MX0.yrpFk48HUihXuhZzLZ6_3yEtZhduU8yRZgQ-VrYUwQY'
+    };
     
-    // ประกาศเพียงครั้งเดียวที่นี่
-    let supabase;
-    let currentUser = null;
-    let loginModalInstance;
+    let supabaseClient; // ใช้ชื่ออื่นเพื่อป้องกันการซ้ำกับ Library
+    let currentInstructor = null;
+    let authModal;
 
     document.addEventListener('DOMContentLoaded', () => {
-        // 1. Init Supabase
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        
-        // 2. Init Login Modal
-        const modalElement = document.getElementById('loginModal');
-        loginModalInstance = new bootstrap.Modal(modalElement);
-        
-        // 3. Check Authentication
-        checkAuth();
+        try {
+            // กำหนดค่าตัวแปรโดยไม่มีการใช้ let/const ซ้ำที่นี่
+            supabaseClient = window.supabase.createClient(CONFIG.SB_URL, CONFIG.SB_KEY);
+            authModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            checkSession();
+        } catch (e) { console.error("Init Error:", e); }
     });
 
-    function checkAuth() {
-        const saved = localStorage.getItem('stb_instructor');
-        if (saved) {
-            try {
-                currentUser = JSON.parse(saved);
-                renderUI();
-                loadPosts();
-            } catch (e) {
-                localStorage.removeItem('stb_instructor');
-                loginModalInstance.show();
-            }
+    function checkSession() {
+        const session = localStorage.getItem('stb_instructor');
+        if (session) {
+            currentInstructor = JSON.parse(session);
+            showUI();
+            loadPosts();
         } else {
-            loginModalInstance.show();
+            authModal.show();
         }
     }
 
@@ -164,90 +132,74 @@
         const pass = document.getElementById('passInput').value.trim();
         if(!pass) return;
 
-        Swal.fire({ title: 'กำลังตรวจสอบ...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+        Swal.fire({ title: 'ตรวจสอบรหัสผ่าน...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
         try {
-            const res = await fetch(`${GAS_URL}?action=getMembers&t=${Date.now()}`);
+            const res = await fetch(`${CONFIG.GAS}?action=getMembers&t=${Date.now()}`);
             const members = await res.json();
-            const found = members.find(m => String(m.sequence || m.ลำดับ) === pass);
+            const instructor = members.find(m => String(m.sequence || m.ลำดับ) === pass);
 
-            if (found) {
-                currentUser = {
+            if (instructor) {
+                currentInstructor = {
                     seq: pass,
-                    name: found.fullname || found.fullName || found.ชื่อนามสกุล || 'ไม่ระบุชื่อ',
-                    avatar: found.imageurl || found.imageUrl || found.รูปภาพ || ''
+                    name: instructor.fullName || instructor.ชื่อนามสกุล || instructor.fullname,
+                    avatar: instructor.imageUrl || instructor.imageurl || ''
                 };
-                
-                if(currentUser.avatar.includes('id=')) {
-                    currentUser.avatar = `https://drive.google.com/thumbnail?id=${currentUser.avatar.split('id=')[1].split('&')[0]}&sz=w200`;
+                if(currentInstructor.avatar.includes('id=')) {
+                    currentInstructor.avatar = `https://drive.google.com/thumbnail?id=${currentInstructor.avatar.split('id=')[1].split('&')[0]}&sz=w200`;
                 }
-
-                localStorage.setItem('stb_instructor', JSON.stringify(currentUser));
+                localStorage.setItem('stb_instructor', JSON.stringify(currentInstructor));
                 Swal.close();
-                loginModalInstance.hide();
-                renderUI();
+                authModal.hide();
+                showUI();
                 loadPosts();
-            } else {
-                Swal.fire('ผิดพลาด', 'รหัสผ่านไม่ถูกต้อง', 'error');
-            }
-        } catch (e) {
-            Swal.fire('Error', 'การเชื่อมต่อขัดข้อง', 'error');
-        }
+            } else { Swal.fire('ผิดพลาด', 'รหัสผ่านไม่ถูกต้อง', 'error'); }
+        } catch (e) { Swal.fire('Error', 'ระบบขัดข้อง', 'error'); }
     }
 
-    function renderUI() {
+    function showUI() {
         document.getElementById('userInfo').classList.remove('hidden');
         document.getElementById('forumContent').classList.remove('hidden');
-        document.getElementById('userAvatar').src = currentUser.avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
-        document.getElementById('userNameDisplay').innerText = currentUser.name;
+        document.getElementById('userAvatar').src = currentInstructor.avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+        document.getElementById('userNameDisplay').innerText = currentInstructor.name;
     }
 
     async function loadPosts() {
         const container = document.getElementById('postsList');
-        const { data, error } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
-        
-        if (error) {
-            container.innerHTML = '<div class="text-center text-danger">ไม่สามารถโหลดข้อมูลได้</div>';
-            return;
-        }
-
-        if (data.length === 0) {
-            container.innerHTML = '<div class="text-center py-5 text-muted">ยังไม่มีกระทู้ในขณะนี้</div>';
-            return;
-        }
-
-        container.innerHTML = data.map(p => `
-            <div class="card post-card p-4">
-                <div class="d-flex align-items-center gap-3 mb-3">
-                    <img src="${p.author_avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="author-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
-                    <div class="w-100">
-                        <div class="d-flex justify-content-between">
-                            <div class="fw-bold text-danger">${p.author_name}</div>
-                            <span class="badge bg-danger rounded-pill">${p.category || 'พูดคุยทั่วไป'}</span>
+        const { data, error } = await supabaseClient.from('posts').select('*').order('created_at', { ascending: false });
+        if (data) {
+            if (data.length === 0) {
+                container.innerHTML = '<div class="text-center py-5 text-muted">ยังไม่มีกระทู้</div>';
+                return;
+            }
+            container.innerHTML = data.map(p => `
+                <div class="card post-card p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <img src="${p.author_avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="author-img">
+                        <div class="w-100">
+                            <div class="d-flex justify-content-between">
+                                <div class="fw-bold text-danger">${p.author_name}</div>
+                                <span class="badge bg-danger rounded-pill">${p.category || 'พูดคุย'}</span>
+                            </div>
+                            <div class="text-muted small">${new Date(p.created_at).toLocaleString('th-TH')}</div>
                         </div>
-                        <div class="text-muted small">${new Date(p.created_at).toLocaleString('th-TH')}</div>
                     </div>
+                    <h5 class="fw-bold mb-2">${p.title}</h5>
+                    <p class="text-muted mb-0" style="white-space: pre-wrap;">${p.content}</p>
                 </div>
-                <h5 class="fw-bold mb-2">${p.title}</h5>
-                <p class="text-muted mb-0" style="white-space: pre-wrap;">${p.content}</p>
-            </div>
-        `).join('');
+            `).join('');
+        }
     }
 
     async function submitPost() {
         const title = document.getElementById('postTitle').value.trim();
         const content = document.getElementById('postContent').value.trim();
         const category = document.getElementById('postCategory').value;
-        if(!title || !content) return Swal.fire('แจ้งเตือน', 'กรุณากรอกข้อมูลให้ครบ', 'warning');
+        if(!title || !content) return;
 
-        const btn = document.querySelector('.modal-footer .btn-stb');
-        btn.disabled = true;
-
-        const { error } = await supabase.from('posts').insert([{
+        const { error } = await supabaseClient.from('posts').insert([{
             title, content, category,
-            author_name: currentUser.name, 
-            author_seq: currentUser.seq, 
-            author_avatar: currentUser.avatar
+            author_name: currentInstructor.name, author_seq: currentInstructor.seq, author_avatar: currentInstructor.avatar
         }]);
 
         if(!error) {
@@ -256,13 +208,9 @@
             document.getElementById('postTitle').value = '';
             document.getElementById('postContent').value = '';
         }
-        btn.disabled = false;
     }
 
-    function logout() {
-        localStorage.removeItem('stb_instructor');
-        location.reload();
-    }
+    function logout() { localStorage.removeItem('stb_instructor'); location.reload(); }
 </script>
 </body>
 </html>

@@ -10,7 +10,7 @@
     
     <style>
         :root {
-            --stb-red: #b3252b; /* เฉดสีแดงใหม่ตามที่กำหนด */
+            --stb-red: #b3252b; 
             --stb-black: #000000;
             --stb-white: #ffffff;
         }
@@ -21,7 +21,6 @@
             margin: 0; padding: 0; 
         }
 
-        /* Navbar แถบดำ หยดเลือดแดง */
         .navbar { 
             background-color: var(--stb-black) !important; 
             border-bottom: 4px solid var(--stb-red);
@@ -30,7 +29,6 @@
         .navbar-brand { font-weight: 600; color: var(--stb-white) !important; font-size: 15px; letter-spacing: 0.5px; }
         .fa-drop-red { color: var(--stb-red); }
 
-        /* Header Section */
         .header-section { 
             padding: 40px 0; 
             background: var(--stb-white);
@@ -44,7 +42,6 @@
             filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
         }
         
-        /* ชื่อโครงการ สีแดงใหม่ ตัวหนา */
         .text-container h1 { 
             color: var(--stb-red); 
             font-weight: 800; 
@@ -61,7 +58,6 @@
         }
         .sub-text { color: #666; font-size: 15px; font-weight: 400; }
 
-        /* Menu Cards สีแดงใหม่ ตัวหนังสือขาว */
         .menu-card {
             background: linear-gradient(135deg, #b3252b, #8a1d21);
             border-radius: 12px; 
@@ -84,7 +80,6 @@
         .menu-card i { font-size: 28px; margin-right: 20px; width: 40px; text-align: center; }
         .menu-card h4 { font-weight: 600; font-size: 18px; margin: 0; }
 
-        /* News Display Area */
         .display-area {
             background: white; 
             border-radius: 20px; 
@@ -168,6 +163,15 @@
     <script>
         const scriptUrl = 'https://script.google.com/macros/s/AKfycbwoThfq-QRt5Ypc9An45RupB5hJR1civOgKQQxx2WpxQKcfM3SEGPoJ8LgUC8ixyLg/exec';
 
+        // ฟังก์ชันแปลงวันที่เป็นภาษาไทย พ.ศ.
+        const fmtThaiDate = (d) => {
+            if (!d) return "-";
+            const date = new Date(d);
+            if (isNaN(date.getTime())) return d;
+            const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+            return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear() + 543}`;
+        };
+
         window.onload = function() {
             fetch(`${scriptUrl}?action=getNews&t=${Date.now()}`)
                 .then(res => res.json())
@@ -176,11 +180,17 @@
                     const contentArea = document.getElementById('mainContent');
                     
                     if(latest) {
+                        // ดึง URL รูปภาพ (รองรับทั้งตัวพิมพ์เล็กและพิมพ์ใหญ่ตามสคริปต์ .gs)
+                        const img = latest.imageurl || latest.ImageUrl || "";
+                        const dateVal = latest.date || latest.วันที่ || "";
+
                         contentArea.innerHTML = `
                             <div class="display-area">
-                                ${latest.imageurl ? `<img src="${latest.imageurl}" class="news-img shadow-sm">` : ''}
-                                <h3 class="fw-bold mb-2" style="color:var(--stb-red)">${latest.title}</h3>
-                                <p class="text-muted small mb-3"><i class="far fa-calendar-alt me-1"></i> ${latest.date || ''}</p>
+                                ${img ? `<img src="${img}" class="news-img shadow-sm" alt="News Image">` : ''}
+                                <h3 class="fw-bold mb-2" style="color:var(--stb-red)">${latest.title || 'ประกาศ'}</h3>
+                                <p class="text-muted small mb-3">
+                                    <i class="far fa-calendar-alt me-1"></i> ประกาศเมื่อ: ${fmtThaiDate(dateVal)}
+                                </p>
                                 <div style="white-space: pre-wrap; line-height: 1.8; color: #333; font-size: 16px;">${latest.detail || ''}</div>
                                 <div class="mt-4 text-end">
                                     <a href="news.html" class="btn btn-outline-danger btn-sm rounded-pill px-4">อ่านข่าวทั้งหมด</a>
@@ -191,6 +201,7 @@
                     }
                 })
                 .catch(err => {
+                    console.error("Fetch error:", err);
                     document.getElementById('mainContent').innerHTML = '<div class="alert alert-danger">ไม่สามารถโหลดข้อมูลข่าวสารได้</div>';
                 });
         };

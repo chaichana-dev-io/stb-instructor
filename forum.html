@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เว็บบอร์ด - STOP THE BLEED INSTRUCTOR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --stb-red: #b3252b;
+            --stb-black: #000000;
+            --stb-white: #ffffff;
+        }
+
+        body { font-family: 'Sarabun', sans-serif; background-color: #f8f9fa; }
+        
+        .navbar { background-color: var(--stb-black) !important; border-bottom: 4px solid var(--stb-red); height: 55px; }
+        .navbar-brand { font-size: 15px; color: white !important; font-weight: 600; }
+
+        .forum-container { max-width: 900px; margin: 30px auto; }
+        .post-card { border-radius: 15px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 15px; background: white; transition: 0.3s; }
+        .post-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        
+        .author-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #eee; }
+        .btn-stb { background-color: var(--stb-red); color: white; border-radius: 25px; font-weight: 600; border: none; padding: 10px 25px; }
+        .btn-stb:hover { background-color: #8a1d21; color: white; }
+
+        .hidden { display: none !important; }
+        .user-pill { background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 50px; display: flex; align-items: center; gap: 10px; color: white; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark shadow-sm">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+        <a class="navbar-brand m-0" href="index.html">
+            <i class="fas fa-comments me-2" style="color: var(--stb-red);"></i>เว็บบอร์ดผู้สอน
+        </a>
+        <div id="userInfo" class="hidden">
+            <div class="user-pill">
+                <img id="userAvatar" src="" style="width: 25px; height: 25px; border-radius: 50%; object-fit: cover;">
+                <span id="userNameDisplay"></span>
+                <button class="btn btn-link btn-sm text-white p-0" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container forum-container hidden" id="forumContent">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold"><i class="fas fa-list-ul me-2 text-danger"></i>กระทู้ถาม-ตอบ</h3>
+        <button class="btn-stb" data-bs-toggle="modal" data-bs-target="#addPostModal">
+            <i class="fas fa-plus me-2"></i>ตั้งคำถามใหม่
+        </button>
+    </div>
+    
+    <div id="postsList">
+        <div class="text-center py-5"><div class="spinner-border text-danger"></div></div>
+    </div>
+</div>
+
+<!-- Modal: Login (รหัสผ่าน) -->
+<div class="modal fade" id="loginModal" data-bs-backdrop="static" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 15px 50px rgba(0,0,0,0.2);">
+            <div class="modal-body p-5 text-center">
+                <i class="fas fa-lock-open fa-3x text-danger mb-4"></i>
+                <h4 class="fw-bold mb-3">เข้าสู่พื้นที่เฉพาะสมาชิก</h4>
+                <p class="text-muted small mb-4">กรุณากรอกรหัสผ่านเพื่อยืนยันตัวตนผู้สอน</p>
+                <input type="password" id="passInput" class="form-control form-control-lg text-center fw-bold mb-3" placeholder="ระบุรหัสผ่านที่นี่" style="border-radius: 12px; border: 2px solid #eee;">
+                <button class="btn btn-danger w-100 btn-lg fw-bold" onclick="handleLogin()" style="border-radius: 12px;">ยืนยันสิทธิ์</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: ตั้งกระทู้ -->
+<div class="modal fade" id="addPostModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="border-radius: 15px;">
+            <div class="modal-header border-0 p-4 pb-0">
+                <h5 class="modal-title fw-bold">ระบุคำถามของคุณ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="text" id="postTitle" class="form-control mb-3" placeholder="หัวข้อคำถาม (สั้นๆ ได้ใจความ)">
+                <textarea id="postContent" class="form-control" rows="5" placeholder="อธิบายรายละเอียดที่ต้องการสอบถาม..."></textarea>
+            </div>
+            <div class="modal-footer border-0 p-4 pt-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">ยกเลิก</button>
+                <button type="button" class="btn-stb" onclick="submitPost()">ส่งคำถาม</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxnr0zqjwDx3nmLii061zOnU_Bhvva8UxQ-Qf1beH0EA8eRAOFigiuxrpn_Qihci8DE/exec';
+    const SUPABASE_URL = 'https://cvtpzuqmensoigxzmwrk.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2dHB6dXFtZW5zb2lneHptd3JrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MzM5NDEsImV4cCI6MjA5NDIwOTk0MX0.yrpFk48HUihXuhZzLZ6_3yEtZhduU8yRZgQ-VrYUwQY';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let currentUser = null;
+    let loginModal;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+        checkAuth();
+    });
+
+    function checkAuth() {
+        const saved = localStorage.getItem('stb_instructor');
+        if (saved) {
+            currentUser = JSON.parse(saved);
+            renderUI();
+            loadPosts();
+        } else {
+            loginModal.show();
+        }
+    }
+
+    async function handleLogin() {
+        const pass = document.getElementById('passInput').value.trim();
+        if(!pass) return;
+
+        Swal.fire({ title: 'กำลังยืนยันตัวตน...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+
+        try {
+            const res = await fetch(`${GAS_URL}?action=getMembers&t=${Date.now()}`);
+            const members = await res.json();
+            // ตรวจสอบรหัสผ่านกับ Sequence ในระบบ
+            const found = members.find(m => String(m.sequence || m.ลำดับ) === pass);
+
+            if (found) {
+                currentUser = {
+                    seq: pass,
+                    name: found.fullName || found.ชื่อนามสกุล,
+                    avatar: found.imageUrl || found.imageurl || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'
+                };
+                localStorage.setItem('stb_instructor', JSON.stringify(currentUser));
+                Swal.close();
+                loginModal.hide();
+                renderUI();
+                loadPosts();
+            } else {
+                Swal.fire('ผิดพลาด', 'รหัสผ่านไม่ถูกต้อง หรือคุณยังไม่ได้ลงทะเบียนผู้สอน', 'error');
+            }
+        } catch (e) { Swal.fire('Error', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error'); }
+    }
+
+    function renderUI() {
+        document.getElementById('userInfo').classList.remove('hidden');
+        document.getElementById('forumContent').classList.remove('hidden');
+        document.getElementById('userAvatar').src = currentUser.avatar;
+        document.getElementById('userNameDisplay').innerText = currentUser.name;
+    }
+
+    async function loadPosts() {
+        const { data, error } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
+        const container = document.getElementById('postsList');
+        
+        if (data) {
+            container.innerHTML = data.map(p => `
+                <div class="card post-card p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <img src="${p.author_avatar}" class="author-img">
+                        <div>
+                            <div class="fw-bold text-danger">${p.author_name}</div>
+                            <div class="text-muted small">${new Date(p.created_at).toLocaleString('th-TH')}</div>
+                        </div>
+                    </div>
+                    <h5 class="fw-bold mb-2">${p.title}</h5>
+                    <p class="text-muted mb-0">${p.content}</p>
+                </div>
+            `).join('');
+        }
+    }
+
+    async function submitPost() {
+        const title = document.getElementById('postTitle').value.trim();
+        const content = document.getElementById('postContent').value.trim();
+        if(!title || !content) return;
+
+        const { error } = await supabase.from('posts').insert([{
+            title, content, author_name: currentUser.name, author_seq: currentUser.seq, author_avatar: currentUser.avatar
+        }]);
+
+        if(!error) {
+            bootstrap.Modal.getInstance(document.getElementById('addPostModal')).hide();
+            loadPosts();
+            document.getElementById('postTitle').value = '';
+            document.getElementById('postContent').value = '';
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem('stb_instructor');
+        location.reload();
+    }
+</script>
+</body>
+</html>

@@ -53,7 +53,7 @@
         .pagination-container { padding: 25px 0; display: flex; justify-content: center; gap: 8px; }
         .page-btn {
             border: 1px solid #ddd; background: white; color: #333;
-            width: 40px; height: 400px; border-radius: 10px; cursor: pointer;
+            width: 40px; height: 40px; border-radius: 10px; cursor: pointer;
             display: flex; align-items: center; justify-content: center; font-weight: bold; transition: 0.3s;
         }
         .page-btn.active { background: var(--stb-red); color: white; border-color: var(--stb-red); }
@@ -68,7 +68,7 @@
 
         .detail-header { background: linear-gradient(135deg, #1a1a1a, #000); color: white; }
 
-        /* Loading */
+        /* Loading Overlay */
         #loadingOverlay { z-index: 10000; }
     </style>
 </head>
@@ -192,6 +192,7 @@
                                     <span id="textIg" class="info-value info-text"></span>
                                     <input type="text" id="inputIg" class="edit-input hidden">
                                 </div>
+                                <input type="hidden" id="inputNick">
                             </div>
                         </form>
                     </div>
@@ -214,6 +215,7 @@
         const rowsPerPage = 10;
         let currentMember = null;
 
+        // แปลงลิงก์รูปภาพ
         function getDirectImg(url) {
             if(!url || url === "") return 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
             if(url.includes('id=')) {
@@ -228,7 +230,8 @@
             try {
                 const res = await fetch(`${scriptUrl}?action=getMembers&t=${Date.now()}`);
                 const data = await res.json();
-                members = data.sort((a, b) => parseInt(a.sequence) - parseInt(b.sequence));
+                // เรียงตาม sequence จากน้อยไปมาก
+                members = data.sort((a, b) => parseInt(a.sequence || a.ลำดับ) - parseInt(b.sequence || b.ลำดับ));
                 renderTable();
             } catch (e) { Swal.fire('Error', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error'); }
             showLoad(false);
@@ -237,25 +240,31 @@
         function renderTable() {
             const val = document.getElementById('searchInput').value.toLowerCase();
             const filtered = members.filter(m => 
-                (m.sequence || '').toString().includes(val) || 
-                (m.fullName || '').toLowerCase().includes(val) || 
-                (m.nickname || '').toLowerCase().includes(val)
+                (m.sequence || m.ลำดับ || '').toString().includes(val) || 
+                (m.fullName || m.ชื่อนามสกุล || '').toLowerCase().includes(val) || 
+                (m.nickname || m.ชื่อเล่น || '').toLowerCase().includes(val)
             );
             
             const startIndex = (currentPage - 1) * rowsPerPage;
             const paginatedData = filtered.slice(startIndex, startIndex + rowsPerPage);
             const body = document.getElementById('tableBody');
             
-            body.innerHTML = paginatedData.map(m => `
-                <tr onclick="viewDetail('${m.sequence}')">
+            body.innerHTML = paginatedData.map(m => {
+                const seq = m.sequence || m.ลำดับ;
+                const name = m.fullName || m.ชื่อนามสกุล;
+                const nick = m.nickname || m.ชื่อเล่น;
+                const img = m.imageUrl || m.imageurl || m.รูปภาพ;
+                
+                return `
+                <tr onclick="viewDetail('${seq}')">
                     <td class="text-center">
-                        <img src="${getDirectImg(m.imageUrl || m.imageurl)}" class="profile-thumb" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
+                        <img src="${getDirectImg(img)}" class="profile-thumb" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
                     </td>
-                    <td class="fw-bold">${m.fullName || ''}</td>
-                    <td>${m.nickname || '-'}</td>
+                    <td class="fw-bold">${name || ''}</td>
+                    <td>${nick || '-'}</td>
                     <td class="text-center text-danger"><i class="fas fa-chevron-right"></i></td>
                 </tr>
-            `).join('');
+            `}).join('');
             renderPagination(filtered.length);
         }
 
@@ -275,22 +284,22 @@
         function filterData() { currentPage = 1; renderTable(); }
 
         function viewDetail(seq) {
-            currentMember = members.find(m => m.sequence.toString() === seq.toString());
+            currentMember = members.find(m => (m.sequence || m.ลำดับ).toString() === seq.toString());
             if (!currentMember) return;
             
-            document.getElementById('detailImage').src = getDirectImg(currentMember.imageUrl || currentMember.imageurl);
-            document.getElementById('detailName').innerText = currentMember.fullName || '';
-            document.getElementById('detailNick').innerText = currentMember.nickname || '-';
+            const img = currentMember.imageUrl || currentMember.imageurl || currentMember.รูปภาพ;
+            document.getElementById('detailImage').src = getDirectImg(img);
+            document.getElementById('detailName').innerText = currentMember.fullName || currentMember.ชื่อนามสกุล || '';
+            document.getElementById('detailNick').innerText = currentMember.nickname || currentMember.ชื่อเล่น || '-';
             
-            document.getElementById('textSeq').innerText = currentMember.sequence || '';
-            document.getElementById('textName').innerText = currentMember.fullName || '';
-            document.getElementById('textNick').innerText = currentMember.nickname || '-';
-            document.getElementById('textPhone').innerText = currentMember.phone || '-';
-            document.getElementById('textEmail').innerText = currentMember.email || '-';
-            document.getElementById('textLine').innerText = currentMember.lineId || '-';
+            document.getElementById('textSeq').innerText = currentMember.sequence || currentMember.ลำดับ || '';
+            document.getElementById('textName').innerText = currentMember.fullName || currentMember.ชื่อนามสกุล || '';
+            document.getElementById('textPhone').innerText = currentMember.phone || currentMember.เบอร์โทร || '-';
+            document.getElementById('textEmail').innerText = currentMember.email || currentMember.อีเมล || '-';
+            document.getElementById('textLine').innerText = currentMember.lineId || currentMember.lineid || '-';
             document.getElementById('textFb').innerText = currentMember.facebook || '-';
             document.getElementById('textIg').innerText = currentMember.instagram || '-';
-            document.getElementById('textAddress').innerText = currentMember.address || '-';
+            document.getElementById('textAddress').innerText = currentMember.address || currentMember.ที่อยู่ || '-';
             
             cancelEdit(); showPage('detail');
         }
@@ -303,15 +312,16 @@
         function enableEdit() {
             document.querySelectorAll('.info-text').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.edit-input').forEach(el => el.classList.remove('hidden'));
-            document.getElementById('inputSeq').value = currentMember.sequence;
-            document.getElementById('inputName').value = currentMember.fullName || '';
-            document.getElementById('inputNick').value = currentMember.nickname || '';
-            document.getElementById('inputPhone').value = currentMember.phone || '';
-            document.getElementById('inputEmail').value = currentMember.email || '';
-            document.getElementById('inputLine').value = currentMember.lineId || '';
+            
+            document.getElementById('inputSeq').value = currentMember.sequence || currentMember.ลำดับ;
+            document.getElementById('inputName').value = currentMember.fullName || currentMember.ชื่อนามสกุล || '';
+            document.getElementById('inputNick').value = currentMember.nickname || currentMember.ชื่อเล่น || '';
+            document.getElementById('inputPhone').value = currentMember.phone || currentMember.เบอร์โทร || '';
+            document.getElementById('inputEmail').value = currentMember.email || currentMember.อีเมล || '';
+            document.getElementById('inputLine').value = currentMember.lineId || currentMember.lineid || '';
             document.getElementById('inputFb').value = currentMember.facebook || '';
             document.getElementById('inputIg').value = currentMember.instagram || '';
-            document.getElementById('inputAddress').value = currentMember.address || '';
+            document.getElementById('inputAddress').value = currentMember.address || currentMember.ที่อยู่ || '';
             
             document.getElementById('editImageSection').classList.remove('hidden');
             document.getElementById('btnEdit').classList.add('hidden');
@@ -331,7 +341,7 @@
         async function saveData() {
             const confirm = await Swal.fire({
                 title: 'ยืนยันการบันทึก?',
-                text: "ข้อมูลเดิมจะถูกเขียนทับ",
+                text: "ข้อมูลจะถูกอัปเดตไปยังระบบทันที",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#b3252b',
@@ -358,24 +368,38 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = async (e) => {
-                    payload.image = e.target.result;
-                    payload.imageName = `Edit_Member_${payload.sequence}`;
+                    payload.image = e.target.result; // base64
                     await sendToServer(payload);
                 };
                 reader.readAsDataURL(file);
-            } else { await sendToServer(payload); }
+            } else { 
+                await sendToServer(payload); 
+            }
         }
 
         async function sendToServer(p) {
             try {
-                await fetch(scriptUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify(p) });
-                Swal.fire({
-                    title: 'สำเร็จ',
-                    text: 'อัปเดตข้อมูลวิทยากรเรียบร้อยแล้ว',
-                    icon: 'success',
-                    confirmButtonColor: '#b3252b'
-                }).then(() => location.reload());
-            } catch (e) { location.reload(); }
+                // ส่งแบบ no-cors สำหรับ Google Apps Script
+                await fetch(scriptUrl, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    body: JSON.stringify(p) 
+                });
+                
+                // เนื่องจาก no-cors ไม่ส่งผลกลับมา เราจะรอ 2 วินาทีแล้วโหลดใหม่
+                setTimeout(() => {
+                    showLoad(false);
+                    Swal.fire({
+                        title: 'สำเร็จ',
+                        text: 'อัปเดตข้อมูลวิทยากรเรียบร้อยแล้ว',
+                        icon: 'success',
+                        confirmButtonColor: '#b3252b'
+                    }).then(() => location.reload());
+                }, 2000);
+            } catch (e) { 
+                showLoad(false);
+                Swal.fire('Error', 'เกิดข้อผิดพลาดในการส่งข้อมูล', 'error');
+            }
         }
 
         function showLoad(s) { document.getElementById('loadingOverlay').classList.toggle('hidden', !s); }

@@ -14,9 +14,33 @@
             --stb-white: #ffffff;
         }
 
-        body { font-family: 'Sarabun', sans-serif; background-color: #fcfcfc; color: #333; }
+        /* [SECURITY] ป้องกันการคัดลอกและคลุมดำ */
+        body { 
+            font-family: 'Sarabun', sans-serif; 
+            background-color: #fcfcfc; 
+            color: #333; 
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* [SECURITY] ป้องกันการลากรูปภาพ */
+        img {
+            -webkit-user-drag: none;
+            user-drag: none;
+            pointer-events: none;
+        }
+
+        /* อนุญาตให้พิมพ์ในช่อง Input ได้ตามปกติ */
+        input, textarea {
+            -webkit-user-select: text !important;
+            -moz-user-select: text !important;
+            -ms-user-select: text !important;
+            user-select: text !important;
+            pointer-events: auto !important;
+        }
         
-        /* Navbar ธีมหลัก */
         .navbar { 
             background-color: var(--stb-black) !important; 
             border-bottom: 4px solid var(--stb-red);
@@ -50,6 +74,7 @@
             border: 1px solid #ddd; background: white; color: #333;
             width: 40px; height: 40px; border-radius: 10px; cursor: pointer;
             display: flex; align-items: center; justify-content: center; font-weight: bold; transition: 0.3s;
+            pointer-events: auto;
         }
         .page-btn.active { background: var(--stb-red); color: white; border-color: var(--stb-red); }
 
@@ -60,17 +85,31 @@
         .edit-input:focus { border-color: var(--stb-red); }
 
         .detail-header { background: var(--stb-red); color: white; }
+
+        /* [SECURITY] หน้าจอพัก (Overlay) */
+        #security-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(20px);
+            z-index: 10000; display: none; justify-content: center; align-items: center;
+            color: white; text-align: center; flex-direction: column;
+        }
     </style>
 </head>
 <body>
 
-    <!-- แก้ไข Navbar เพิ่มปุ่มกลับหน้าหลัก -->
+    <!-- [SECURITY] Overlay สำหรับพักหน้าจอ -->
+    <div id="security-overlay">
+        <i class="fas fa-user-shield fa-3x mb-3" style="color: var(--stb-red);"></i>
+        <h4 class="fw-bold">Security Lock</h4>
+        <p>ระบบปิดกั้นการเข้าถึงเพื่อความปลอดภัยของข้อมูล</p>
+    </div>
+
     <nav class="navbar navbar-dark shadow mb-4">
         <div class="container-fluid d-flex justify-content-between align-items-center">
-            <a class="navbar-brand m-0" href="index.html">
+            <a class="navbar-brand m-0" href="index.html" style="pointer-events: auto;">
                 <i class="fas fa-tint me-2" style="color: var(--stb-red);"></i>STOP THE BLEED INSTRUCTOR
             </a>
-            <a href="index.html" class="btn btn-outline-light btn-sm fw-bold px-3 rounded-pill">
+            <a href="index.html" class="btn btn-outline-light btn-sm fw-bold px-3 rounded-pill" style="pointer-events: auto;">
                 <i class="fas fa-home me-1"></i>กลับหน้าหลัก
             </a>
         </div>
@@ -83,7 +122,7 @@
                     <h3 class="fw-bold m-0 text-start" style="color: var(--stb-red);">
                         <i class="fas fa-address-book me-2"></i>ทำเนียบผู้สอน
                     </h3>
-                    <a href="register.html" class="btn btn-danger rounded-pill px-3 fw-bold btn-sm">
+                    <a href="register.html" class="btn btn-danger rounded-pill px-3 fw-bold btn-sm" style="pointer-events: auto;">
                         <i class="fas fa-plus me-1"></i>ลงทะเบียนเพิ่ม
                     </a>
                 </div>
@@ -111,7 +150,7 @@
         </div>
 
         <div id="detailPage" class="hidden text-start">
-            <button class="btn btn-link text-decoration-none fw-bold mb-3 text-dark" onclick="showPage('list')">
+            <button class="btn btn-link text-decoration-none fw-bold mb-3 text-dark" onclick="showPage('list')" style="pointer-events: auto;">
                 <i class="fas fa-arrow-left me-1"></i> กลับไปหน้ารายชื่อ
             </button>
             <div class="card overflow-hidden shadow-lg border-0">
@@ -121,7 +160,7 @@
                             <img id="detailImage" src="" class="profile-img-detail mb-3" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
                             <div id="editImageSection" class="hidden mb-3">
                                 <label class="text-white-50 small d-block mb-1">เลือกรูปถ่ายใหม่</label>
-                                <input type="file" id="fileInput" class="form-control form-control-sm" accept="image/*">
+                                <input type="file" id="fileInput" class="form-control form-control-sm" accept="image/*" style="pointer-events: auto;">
                             </div>
                         </div>
                         <h2 id="detailName" class="fw-extrabold text-white mb-2"></h2>
@@ -132,9 +171,9 @@
                         <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
                             <h4 class="fw-bold m-0" style="color: var(--stb-red);">Instructor Profile</h4>
                             <div>
-                                <button id="btnEdit" class="btn btn-dark btn-sm px-3 rounded-pill fw-bold" onclick="enableEdit()"><i class="fas fa-edit me-1"></i>แก้ไขข้อมูล</button>
-                                <button id="btnSave" class="btn btn-success btn-sm px-3 rounded-pill fw-bold hidden" onclick="saveData()"><i class="fas fa-save me-1"></i>บันทึก</button>
-                                <button id="btnCancel" class="btn btn-light btn-sm px-3 rounded-pill fw-bold hidden ms-1" onclick="cancelEdit()">ยกเลิก</button>
+                                <button id="btnEdit" class="btn btn-dark btn-sm px-3 rounded-pill fw-bold" onclick="enableEdit()" style="pointer-events: auto;"><i class="fas fa-edit me-1"></i>แก้ไขข้อมูล</button>
+                                <button id="btnSave" class="btn btn-success btn-sm px-3 rounded-pill fw-bold hidden" onclick="saveData()" style="pointer-events: auto;"><i class="fas fa-save me-1"></i>บันทึก</button>
+                                <button id="btnCancel" class="btn btn-light btn-sm px-3 rounded-pill fw-bold hidden ms-1" onclick="cancelEdit()" style="pointer-events: auto;">ยกเลิก</button>
                             </div>
                         </div>
 
@@ -196,6 +235,20 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // [SECURITY] ระบบป้องกันการคัดลอกและพักหน้าจอ
+        (function() {
+            document.addEventListener('contextmenu', e => e.preventDefault());
+            document.addEventListener('keydown', e => {
+                if (e.ctrlKey && ['c','v','s','u','i'].includes(e.key.toLowerCase())) { e.preventDefault(); }
+            });
+            const overlay = document.getElementById('security-overlay');
+            const lock = () => { overlay.style.display = 'flex'; document.title = "Security Lock..."; };
+            const unlock = () => { overlay.style.display = 'none'; document.title = "ทำเนียบผู้สอน - STOP THE BLEED INSTRUCTOR"; };
+            document.addEventListener("visibilitychange", () => { if (document.visibilityState === 'hidden') lock(); else unlock(); });
+            window.addEventListener('blur', lock);
+            window.addEventListener('focus', unlock);
+        })();
+
         const scriptUrl = 'https://script.google.com/macros/s/AKfycbxnr0zqjwDx3nmLii061zOnU_Bhvva8UxQ-Qf1beH0EA8eRAOFigiuxrpn_Qihci8DE/exec';
         let members = [];
         let currentPage = 1;
@@ -216,12 +269,10 @@
             try {
                 const res = await fetch(`${scriptUrl}?action=getMembers&t=${Date.now()}`);
                 const data = await res.json();
-                
                 members = data.filter(m => {
                     const name = m.fullname || m.fullName || m.ชื่อนามสกุล;
                     return name && name.trim() !== "";
                 }).sort((a, b) => parseInt(a.sequence || a.ลำดับ) - parseInt(b.sequence || b.ลำดับ));
-                
                 renderTable();
             } catch (e) { Swal.fire('Error', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error'); }
             showLoad(false);
@@ -234,17 +285,14 @@
                 (m.fullname || m.fullName || m.ชื่อนามสกุล || '').toLowerCase().includes(val) || 
                 (m.nickname || m.ชื่อเล่น || '').toLowerCase().includes(val)
             );
-            
             const startIndex = (currentPage - 1) * rowsPerPage;
             const paginatedData = filtered.slice(startIndex, startIndex + rowsPerPage);
             const body = document.getElementById('tableBody');
-            
             body.innerHTML = paginatedData.map(m => {
                 const seq = m.sequence || m.ลำดับ || '';
                 const name = m.fullname || m.fullName || m.ชื่อนามสกุล || '';
                 const nick = m.nickname || m.ชื่อเล่น || '-';
                 const img = m.imageurl || m.imageUrl || m.รูปภาพ || '';
-                
                 return `
                 <tr onclick="viewDetail('${seq}')">
                     <td class="text-center">
@@ -266,7 +314,7 @@
             for (let i = 1; i <= totalPages; i++) {
                 const btn = document.createElement('button');
                 btn.innerText = i; btn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
-                btn.onclick = () => { currentPage = i; renderTable(); window.scrollTo(0,0); };
+                btn.onclick = (e) => { e.stopPropagation(); currentPage = i; renderTable(); window.scrollTo(0,0); };
                 container.appendChild(btn);
             }
         }
@@ -276,12 +324,10 @@
         function viewDetail(seq) {
             currentMember = members.find(m => (m.sequence || m.ลำดับ).toString() === seq.toString());
             if (!currentMember) return;
-            
             const img = currentMember.imageurl || currentMember.imageUrl || currentMember.รูปภาพ;
             document.getElementById('detailImage').src = getDirectImg(img);
             document.getElementById('detailName').innerText = currentMember.fullname || currentMember.fullName || currentMember.ชื่อนามสกุล || '';
             document.getElementById('detailNick').innerText = currentMember.nickname || currentMember.ชื่อเล่น || '-';
-            
             document.getElementById('textSeq').innerText = currentMember.sequence || currentMember.ลำดับ || '';
             document.getElementById('textName').innerText = currentMember.fullname || currentMember.fullName || currentMember.ชื่อนามสกุล || '';
             document.getElementById('textPhone').innerText = currentMember.phone || currentMember.เบอร์โทร || '-';
@@ -290,7 +336,6 @@
             document.getElementById('textFb').innerText = currentMember.facebook || '-';
             document.getElementById('textIg').innerText = currentMember.instagram || '-';
             document.getElementById('textAddress').innerText = currentMember.address || currentMember.ที่อยู่ || '-';
-            
             cancelEdit(); showPage('detail');
         }
 
@@ -302,7 +347,6 @@
         function enableEdit() {
             document.querySelectorAll('.info-text').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.edit-input').forEach(el => el.classList.remove('hidden'));
-            
             document.getElementById('inputSeq').value = currentMember.sequence || currentMember.ลำดับ;
             document.getElementById('inputName').value = currentMember.fullname || currentMember.fullName || '';
             document.getElementById('inputNick').value = currentMember.nickname || '';
@@ -312,7 +356,6 @@
             document.getElementById('inputFb').value = currentMember.facebook || '';
             document.getElementById('inputIg').value = currentMember.instagram || '';
             document.getElementById('inputAddress').value = currentMember.address || '';
-            
             document.getElementById('editImageSection').classList.remove('hidden');
             document.getElementById('btnEdit').classList.add('hidden');
             document.getElementById('btnSave').classList.remove('hidden');
@@ -339,7 +382,6 @@
                 cancelButtonText: 'ยกเลิก'
             });
             if (!confirm.isConfirmed) return;
-
             showLoad(true);
             const file = document.getElementById('fileInput').files[0];
             const payload = {
@@ -354,40 +396,21 @@
                 instagram: document.getElementById('inputIg').value,
                 address: document.getElementById('inputAddress').value
             };
-
             if (file) {
                 const reader = new FileReader();
-                reader.onload = async (e) => {
-                    payload.image = e.target.result;
-                    await sendToServer(payload);
-                };
+                reader.onload = async (e) => { payload.image = e.target.result; await sendToServer(payload); };
                 reader.readAsDataURL(file);
-            } else { 
-                await sendToServer(payload); 
-            }
+            } else { await sendToServer(payload); }
         }
 
         async function sendToServer(p) {
             try {
-                await fetch(scriptUrl, { 
-                    method: 'POST', 
-                    mode: 'no-cors', 
-                    body: JSON.stringify(p) 
-                });
-                
+                await fetch(scriptUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify(p) });
                 setTimeout(() => {
                     showLoad(false);
-                    Swal.fire({
-                        title: 'สำเร็จ',
-                        text: 'อัปเดตข้อมูลวิทยากรเรียบร้อยแล้ว',
-                        icon: 'success',
-                        confirmButtonColor: '#b3252b'
-                    }).then(() => location.reload());
+                    Swal.fire({ title: 'สำเร็จ', text: 'อัปเดตข้อมูลวิทยากรเรียบร้อยแล้ว', icon: 'success', confirmButtonColor: '#b3252b' }).then(() => location.reload());
                 }, 2000);
-            } catch (e) { 
-                showLoad(false);
-                Swal.fire('Error', 'เกิดข้อผิดพลาดในการส่งข้อมูล', 'error');
-            }
+            } catch (e) { showLoad(false); Swal.fire('Error', 'เกิดข้อผิดพลาดในการส่งข้อมูล', 'error'); }
         }
 
         function showLoad(s) { document.getElementById('loadingOverlay').classList.toggle('hidden', !s); }
